@@ -14,7 +14,7 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -m32 -pipe -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -m32 -pipe -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -m32 -pipe -g -std=c++0x -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I../gobang -I. -I../../../../software/Qt5.5.1/5.5/gcc/include -I../../../../software/Qt5.5.1/5.5/gcc/include/QtWidgets -I../../../../software/Qt5.5.1/5.5/gcc/include/QtGui -I../../../../software/Qt5.5.1/5.5/gcc/include/QtNetwork -I../../../../software/Qt5.5.1/5.5/gcc/include/QtCore -I. -I../../../../software/Qt5.5.1/5.5/gcc/mkspecs/linux-g++-32
 QMAKE         = /home/sfl/software/Qt5.5.1/5.5/gcc/bin/qmake
 DEL_FILE      = rm -f
@@ -178,6 +178,7 @@ DIST          = ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/spec_pre.p
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_pre.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resolve_config.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_post.prf \
+		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/c++11.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/warn_on.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/qt.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resources.prf \
@@ -346,6 +347,7 @@ Makefile: ../gobang/gobang.pro ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/linu
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_pre.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resolve_config.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_post.prf \
+		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/c++11.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/warn_on.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/qt.prf \
 		../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resources.prf \
@@ -486,6 +488,7 @@ Makefile: ../gobang/gobang.pro ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/linu
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_pre.prf:
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resolve_config.prf:
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/default_post.prf:
+../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/c++11.prf:
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/warn_on.prf:
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/qt.prf:
 ../../../../software/Qt5.5.1/5.5/gcc/mkspecs/features/resources.prf:
@@ -897,6 +900,7 @@ board.o: ../gobang/board.cpp ../gobang/board.h \
 		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/qtextoption.h \
 		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/qpen.h \
 		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/QPen \
+		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/QMouseEvent \
 		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/QColor \
 		../../../../software/Qt5.5.1/5.5/gcc/include/QtGui/QBrush
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o board.o ../gobang/board.cpp

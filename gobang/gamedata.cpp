@@ -2,7 +2,8 @@
 
 GameData::GameData()
 {
-    memset(this->stonePos, 0, 4 * 16 * 16);
+    //异常退出的原因，就是因为内存大小写错了
+    memset(this->stonePos, 0, 1 * 15 * 15);
 }
 
 

@@ -8,3 +8,5 @@ SOURCES += \
 HEADERS += \
     board.h \
     gamedata.h
+
+CONFIG += c++11
