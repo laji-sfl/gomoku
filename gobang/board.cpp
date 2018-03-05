@@ -18,21 +18,18 @@ Board::Board(QWidget *parent) : QFrame(parent)
     //初始化棋盘数据
     startPoint = 50;
     intvale = 30;
-    gr = '1';
+    gr = '3';      //没有点击开始游戏，不能点击棋盘,char不能是-1
+    gameTime = 90;
 
     //初始化游戏数据步骤链表
     oneGame.stepList = new QList<step*>;
 
-     /* 测试
-     */
-    //oneGame.stonePos[0][0] = '1';
-    //oneGame.stonePos[0][14] = '2';
+    //设置按钮和label
+    setButtonLabel();
+    setStartButton();
 
-    //显示计时器，倒计时
-
-    //显示悔棋按钮
-
-    //显示自己的昵称头像和对方的昵称头像
+    //自定义的信号和槽，时间为0
+    connect(this,SIGNAL(timeEqual0()),this,SLOT(dealTime0()));
 }
 
 Board::~Board()
@@ -45,6 +42,147 @@ Board::~Board()
     }
     delete oneGame.stepList;
     qDebug() << "xi gou han shu";
+}
+
+//定时器
+void Board::getTimer()
+{
+    this->timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(setTimeLabel()));
+    this->timer->start(1000); //每一秒发射一次
+}
+
+//时间等于0的槽函数
+void Board::dealTime0()
+{
+    qDebug() << "time over ";
+    //暂时父类不做处理
+}
+
+//定时器槽函数
+void Board::setTimeLabel()
+{
+    //暂时先固定时间90秒
+    int minute = 0, second = 0;
+    minute = gameTime / 60;
+    if(minute == 1)
+        second = gameTime - 60;
+    else
+        second = gameTime;
+
+    //发射信号
+    if(gameTime == 0)
+        emit timeEqual0();
+
+    --gameTime;
+//    qDebug() << minute << "**" << second;
+    QString str = QString("time:%1:%2").arg(minute).arg(second);
+
+    //根据对手选择要设置的定时器
+    if(gr == '1')
+        setTimeg(str);
+    else if(gr == '2')
+        setTimer(str);
+}
+
+//设置开始按钮
+void Board::setStartButton()
+{
+    this->startGame = new QPushButton(QString("开始"), this);
+    this->startGame->setMaximumSize(70,30);
+    this->startGame->setMinimumSize(70,30);
+    this->startGame->move(300,480);
+    connect(startGame,&QPushButton::clicked,this,&Board::startTimerGame);
+}
+
+//开始游戏的槽函数
+void Board::startTimerGame()
+{
+    this->getTimer();
+    this->gr = '1';
+    qDebug() << "kai shi you xi";
+}
+
+//设置悔棋和label
+void Board::setButtonLabel()
+{
+    //显示悔棋按钮
+    this->pullBack = new QPushButton(this);
+    this->pullBack->setText(QString("悔棋"));
+    this->pullBack->setMaximumSize(70,30);
+    this->pullBack->setMinimumSize(70,30);
+    this->pullBack->move(200,480);
+    connect(pullBack,&QPushButton::clicked,this,&Board::clickedPB);
+
+    //显示自己的昵称头像和对方的昵称头像
+    gname = new QLabel(this);
+    gpicture = new QLabel(this);
+    gtime = new QLabel(this);
+    rtime = new QLabel(this);
+    rpicture = new QLabel(this);
+    rname = new QLabel(this);
+    this->setNameg(QString("la ji"));
+    this->setPictureg(QString("kk"));
+    this->setTimeg(QString("shi jian"));
+    this->setNamer(QString("la ji"));
+    this->setPicturer(QString("kk"));
+    this->setTimer(QString("shi jian"));
+    update();//重新绘制
+//    qDebug() << "set hui qi and label";
+}
+//设置label
+void Board::setNameg(QString str)
+{
+    this->gname->setText(str);
+    this->gname->move(500, 250);
+    this->gname->setMaximumSize(70,30);
+    this->gname->setMinimumSize(70,30);
+}
+void Board::setPictureg(QString )
+{
+    this->gpicture->setText(QString("tu pian"));
+    this->gpicture->move(500,200);
+    this->gpicture->setMaximumSize(70,30);
+    this->gpicture->setMinimumSize(70,30);
+}
+void Board::setTimeg(QString str)
+{
+    this->gtime->setText(str);
+    this->gtime->move(500,100);
+    this->gtime->setMaximumSize(70,30);
+    this->gtime->setMinimumSize(70,30);
+    update();
+//    qDebug() << "setTimeg" << "--" << str;
+}
+void Board::setNamer(QString str)
+{
+    this->rname->setText(str);
+    this->rname->move(500,300);
+    this->rname->setMaximumSize(70,30);
+    this->rname->setMinimumSize(70,30);
+}
+void Board::setPicturer(QString )
+{
+    this->rpicture->setText(QString("tu pian"));
+    this->rpicture->move(500,400);
+    this->rpicture->setMaximumSize(70,30);
+    this->rpicture->setMinimumSize(70,30);
+}
+void Board::setTimer(QString str)
+{
+    this->rtime->setText(str);
+    this->rtime->move(500,480);
+    this->rtime->setMaximumSize(70,30);
+    this->rtime->setMinimumSize(70,30);
+    update();
+//    qDebug() << "setTimer" << "--" << str;
+}
+
+//悔棋
+void Board::clickedPB()
+{
+    //父类什么也不做
+    qDebug() << "hui qi";
 }
 
 //绘制棋盘
@@ -119,7 +257,7 @@ void Board::paintEvent(QPaintEvent *)
 //将鼠标点击的位置转换为棋盘上的坐标
 void Board::computePos(QPoint pos, int &x, int &y)
 {
-    //qDebug() << pos.x() << "---" << pos.y();
+//    qDebug() << pos.x() << "---" << pos.y();
     if(pos.x() < 40 || pos.y() < 40 || pos.x() > (14 * intvale + 60) || pos.y() > (14 * intvale + 60))
         return;
 
@@ -136,7 +274,7 @@ void Board::setGameDataPosStep(int x, int y, char who)
         return;
 
     oneGame.stonePos[x][y] = who;//内存棋盘
-
+    qDebug() << "zuo biao :" << x << " " << y;
     step *oneStep = new step;   //步骤链表
     oneStep->x = x;
     oneStep->y = y;
@@ -149,6 +287,9 @@ void Board::mouseReleaseEvent(QMouseEvent *ev)
 {
     //不是左键点击不予理会
     if(ev->button() != Qt::LeftButton)
+        return;
+    //没开始游戏不能点棋盘
+    if(this->gr == '3')
         return;
 
     int x = -1, y = -1;
@@ -164,21 +305,138 @@ void Board::mouseReleaseEvent(QMouseEvent *ev)
     if(gr == '1')   //简单的实现两个对手之间的切换
     {
         gr = '2';
+        setTimeg(QString("time:1:30"));
+        this->gameTime = 90;
+//        qDebug() << "dui shou chong xin ji shi 1";
         setGameDataPosStep(x, y, gr);
     }
-    else
+    else if(gr == '2')
     {
         gr = '1';
+        setTimer(QString("time:1:30"));
+        this->gameTime = 90;
+//        qDebug() << "dui shou chong xin ji shi 2";
         setGameDataPosStep(x, y, gr);
     }
     update();   //重新绘制
+    if(judgeWin())
+        qDebug() << "game over";
 }
 
 //每次下过一步之后就检测一次是否有五个子相连的情况
 /*
  * 暂时只做简单的判断，当写人机对战的类的时候在分析局势根据局势判断输赢
  */
-void Board::judgeWin()
+bool Board::judgeWin()
 {
+    //test
+//    qDebug() << "yige **********";
+//    for(int j = 0;j < 15; ++j)
+//    {
 
+//        qDebug() << oneGame.stonePos[0][j]
+//                << oneGame.stonePos[1][j]
+//                << oneGame.stonePos[2][j]
+//                << oneGame.stonePos[3][j]
+//                << oneGame.stonePos[4][j]
+//                << oneGame.stonePos[5][j]
+//                << oneGame.stonePos[6][j]
+//                << oneGame.stonePos[7][j]
+//                << oneGame.stonePos[8][j]
+//                << oneGame.stonePos[9][j]
+//                << oneGame.stonePos[10][j]
+//                << oneGame.stonePos[11][j]
+//                << oneGame.stonePos[12][j]
+//                << oneGame.stonePos[13][j]
+//                << oneGame.stonePos[14][j];
+//    }
+
+    //检测每一条线上的数据，应该比顺着点去检测要简单
+    int tmp = 1;    //记录连续的个数
+    int x = 0,y = 0;
+    int start = 0, end = 4;
+    //横线
+    for(int i = 0;i < 15; ++i)
+    {
+        for(int j = 0;j < 14; ++j)
+        {
+            if(oneGame.stonePos[i][j] != '0' && oneGame.stonePos[i][j] == oneGame.stonePos[i][j + 1])
+            {
+                ++tmp;
+                if(tmp == 5) return true;
+            }
+            else
+            {
+                tmp = 1;
+            }
+        }
+    }
+    //竖线
+    for(int j = 0;j < 15; ++j)
+    {
+        tmp = 1;
+        for(int i = 0;i < 14; ++i)
+        {
+            if(oneGame.stonePos[i][j] != '0' && oneGame.stonePos[i][j] == oneGame.stonePos[i + 1][j])
+            {
+                ++tmp;
+                if(tmp == 5) return true;
+            }
+            else
+            {
+                tmp = 1;
+            }
+        }
+    }
+    //斜线
+    for(int i = 0;i < 21; ++i)
+    {
+        x = start; y = end;
+        tmp = 1;
+        while(start != y)
+        {
+            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x][y])
+            {
+                ++tmp;
+                if(tmp == 6) return true;
+            }
+            else
+            {
+                tmp = 1;
+            }
+            x++;
+            y--;
+        }
+        if(end < 14)
+            end++;
+        else
+            start++;
+    }
+    //反斜线
+    start = 10; end = 0;
+    for(int i = 0;i < 21; ++i)
+    {
+        x = start; y = end;
+        tmp = 1;
+        while((start + y) != 14)
+        {
+            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x][y])
+            {
+                ++tmp;
+                if(tmp == 6) return true;
+            }
+            else
+            {
+                tmp = 1;
+            }
+            x++;
+            y++;
+        }
+        if(start > 0)
+            start--;
+        else
+            end++;
+    }
+
+    return false;
 }

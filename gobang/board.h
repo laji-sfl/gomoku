@@ -3,13 +3,16 @@
 
 #include <QFrame>
 #include <QWidget>
+#include <QTimer>   //计时器
+#include <QLabel>   //标签
+#include <QPushButton>//按钮
 #include "gamedata.h"   //棋局的数据
 
 /**
  * 这个类是所有游戏对战类的基类，也是一台电脑人人对战的类
  * 增加可以返回选择对战模式的功能。
  *   需要重写悔棋的槽函数来实现网络端的悔棋，
- *   重写定时器的函数，实现网络事件同步，
+ *   重写定时器的函数，实现网络时间同步，
  * 人机对战类，重写鼠标点击事件，就可以实现电脑下棋
  * 网络对战类，重写鼠标点击事件，实现下棋位置的切换
  *   新添加聊天的函数
@@ -32,20 +35,61 @@ public:
     void drawStone(QPainter &p, char data[15][15]);
 
     //鼠标点击事件的处理
-    void mouseReleaseEvent(QMouseEvent *ev);
+    virtual void mouseReleaseEvent(QMouseEvent *ev);
     void computePos(QPoint pos, int &x, int &y);//计算出棋盘的坐标
 
     //设置游戏数据
-    void setGameDataPosStep(int x, int y, char who);
+    virtual void setGameDataPosStep(int x, int y, char who);
 
     //判断输赢
-    void judgeWin();
+    virtual bool judgeWin();
+
+    //设置label
+    virtual void setNameg(QString str); //昵称
+    virtual void setTimeg(QString str); //时间字符串
+    virtual void setPictureg(QString );  //图片的路径
+    virtual void setNamer(QString str);
+    virtual void setTimer(QString str);
+    virtual void setPicturer(QString );
+
+    //设置悔棋按钮和label
+    void setButtonLabel();
+    virtual void setStartButton();
+
+    //设置定时器
+    void getTimer();
+
+//槽函数
+public slots:
+    //点击悔棋的槽函数
+    virtual void clickedPB();
+    //定时器时间到
+    void setTimeLabel();
+    //开始游戏
+    virtual void startTimerGame();
+    //当时间为0
+    virtual void dealTime0();
+
+//自定义信号
+signals:
+    void timeEqual0();
 
 private:
     GameData oneGame;  //记录游戏数据
     int startPoint;    //起始的位置
     int intvale;       //间隔大小
-    char gr;           //绿的还是红的
+    char gr;           //绿的还是红的,是否开始游戏
+    QPushButton *pullBack;//后悔键
+    QPushButton *startGame; //开始游戏
+    QLabel *gtime;   //计时器
+    QLabel *gname;   //昵称
+    QLabel *gpicture;//头像
+    QLabel *rtime;
+    QLabel *rname;
+    QLabel *rpicture;
+    QTimer *timer;  //计时器是类的属性，在子类中也可以捕捉时间信号
+    //每一个人的固定思考时间
+    int gameTime;
 };
 
 #endif // BOARD_H
