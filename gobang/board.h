@@ -54,7 +54,7 @@ public:
 
     //设置悔棋按钮和label
     void setButtonLabel();
-    virtual void setStartButton();
+    void setStartButton();
 
     //设置定时器
     void getTimer();
@@ -76,8 +76,8 @@ signals:
 
 private:
     GameData oneGame;  //记录游戏数据
-    int startPoint;    //起始的位置
-    int intvale;       //间隔大小
+    int startPoint;    //棋盘起始的位置
+    int intvale;       //棋盘间隔大小
     char gr;           //绿的还是红的,是否开始游戏
     QPushButton *pullBack;//后悔键
     QPushButton *startGame; //开始游戏
@@ -88,8 +88,7 @@ private:
     QLabel *rname;
     QLabel *rpicture;
     QTimer *timer;  //计时器是类的属性，在子类中也可以捕捉时间信号
-    //每一个人的固定思考时间
-    int gameTime;
+    int gameTime;   //每一个人的固定思考时间
 };
 
 #endif // BOARD_H

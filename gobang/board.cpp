@@ -37,11 +37,9 @@ Board::~Board()
     //将步骤链表中的结构体释放
     for(auto tmp = oneGame.stepList->begin();oneGame.stepList->end() != tmp; ++tmp)
     {
-//        qDebug() << "delete stepList";
         delete *tmp;
     }
     delete oneGame.stepList;
-    qDebug() << "xi gou han shu";
 }
 
 //定时器
@@ -55,7 +53,7 @@ void Board::getTimer()
 //时间等于0的槽函数
 void Board::dealTime0()
 {
-    qDebug() << "time over ";
+//    qDebug() << "time over ";
     //暂时父类不做处理
 }
 
@@ -75,7 +73,6 @@ void Board::setTimeLabel()
         emit timeEqual0();
 
     --gameTime;
-//    qDebug() << minute << "**" << second;
     QString str = QString("time:%1:%2").arg(minute).arg(second);
 
     //根据对手选择要设置的定时器
@@ -100,7 +97,6 @@ void Board::startTimerGame()
 {
     this->getTimer();
     this->gr = '1';
-    qDebug() << "kai shi you xi";
 }
 
 //设置悔棋和label
@@ -182,7 +178,7 @@ void Board::setTimer(QString str)
 void Board::clickedPB()
 {
     //父类什么也不做
-    qDebug() << "hui qi";
+//    qDebug() << "hui qi";
 }
 
 //绘制棋盘
@@ -250,21 +246,16 @@ void Board::paintEvent(QPaintEvent *)
 
     //画棋子
     this->drawStone(per, oneGame.stonePos);
-
-//    qDebug() << "hui zhi yi ci";
 }
 
 //将鼠标点击的位置转换为棋盘上的坐标
 void Board::computePos(QPoint pos, int &x, int &y)
 {
-//    qDebug() << pos.x() << "---" << pos.y();
     if(pos.x() < 40 || pos.y() < 40 || pos.x() > (14 * intvale + 60) || pos.y() > (14 * intvale + 60))
         return;
 
     x = (pos.x() -  40) / 30;
     y = (pos.y() -  40) / 30;
-
-    //qDebug() << x << "+++" << y;
 }
 
 //设置游戏的棋子的坐标和下棋的步骤
@@ -274,7 +265,6 @@ void Board::setGameDataPosStep(int x, int y, char who)
         return;
 
     oneGame.stonePos[x][y] = who;//内存棋盘
-    qDebug() << "zuo biao :" << x << " " << y;
     step *oneStep = new step;   //步骤链表
     oneStep->x = x;
     oneStep->y = y;
@@ -294,20 +284,14 @@ void Board::mouseReleaseEvent(QMouseEvent *ev)
 
     int x = -1, y = -1;
 
-    /*
-     * 测试：点击显示棋子
-     */
+    //计算出点击的坐标
     computePos(ev->pos(), x, y);
-
-    //输出x y
-    qDebug() << x << "===" << y;
 
     if(gr == '1')   //简单的实现两个对手之间的切换
     {
         gr = '2';
         setTimeg(QString("time:1:30"));
         this->gameTime = 90;
-//        qDebug() << "dui shou chong xin ji shi 1";
         setGameDataPosStep(x, y, gr);
     }
     else if(gr == '2')
@@ -315,7 +299,6 @@ void Board::mouseReleaseEvent(QMouseEvent *ev)
         gr = '1';
         setTimer(QString("time:1:30"));
         this->gameTime = 90;
-//        qDebug() << "dui shou chong xin ji shi 2";
         setGameDataPosStep(x, y, gr);
     }
     update();   //重新绘制
@@ -329,36 +312,15 @@ void Board::mouseReleaseEvent(QMouseEvent *ev)
  */
 bool Board::judgeWin()
 {
-    //test
-//    qDebug() << "yige **********";
-//    for(int j = 0;j < 15; ++j)
-//    {
-
-//        qDebug() << oneGame.stonePos[0][j]
-//                << oneGame.stonePos[1][j]
-//                << oneGame.stonePos[2][j]
-//                << oneGame.stonePos[3][j]
-//                << oneGame.stonePos[4][j]
-//                << oneGame.stonePos[5][j]
-//                << oneGame.stonePos[6][j]
-//                << oneGame.stonePos[7][j]
-//                << oneGame.stonePos[8][j]
-//                << oneGame.stonePos[9][j]
-//                << oneGame.stonePos[10][j]
-//                << oneGame.stonePos[11][j]
-//                << oneGame.stonePos[12][j]
-//                << oneGame.stonePos[13][j]
-//                << oneGame.stonePos[14][j];
-//    }
-
-    //检测每一条线上的数据，应该比顺着点去检测要简单
+    //检测每一条线上的数据，比沿着点去检测要简单
     int tmp = 1;    //记录连续的个数
-    int x = 0,y = 0;
-    int start = 0, end = 4;
+    int x = 0,y = 0;//根据起始坐标变化的坐标
+    int start = 0, end = 4;//遍历坐标的起始坐标
+
     //横线
-    for(int i = 0;i < 15; ++i)
+    for(int i = 0;i < 15; ++i)  // 15是横线的个数
     {
-        for(int j = 0;j < 14; ++j)
+        for(int j = 0;j < 14; ++j)// 14横线个数减一
         {
             if(oneGame.stonePos[i][j] != '0' && oneGame.stonePos[i][j] == oneGame.stonePos[i][j + 1])
             {
@@ -371,6 +333,7 @@ bool Board::judgeWin()
             }
         }
     }
+
     //竖线
     for(int j = 0;j < 15; ++j)
     {
@@ -388,6 +351,7 @@ bool Board::judgeWin()
             }
         }
     }
+
     //斜线
     for(int i = 0;i < 21; ++i)
     {
@@ -395,23 +359,24 @@ bool Board::judgeWin()
         tmp = 1;
         while(start != y)
         {
-            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x][y])
+            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x + 1][y - 1])   // x y要变化
             {
                 ++tmp;
-                if(tmp == 6) return true;
+                if(tmp == 5) return true;
             }
             else
-            {
                 tmp = 1;
-            }
+            //向右上方增长
             x++;
             y--;
         }
-        if(end < 14)
+
+        if(end < 14)    //根据固定的线的数量改变起始坐标
             end++;
         else
             start++;
     }
+
     //反斜线
     start = 10; end = 0;
     for(int i = 0;i < 21; ++i)
@@ -420,18 +385,18 @@ bool Board::judgeWin()
         tmp = 1;
         while((start + y) != 14)
         {
-            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x][y])
+            if(oneGame.stonePos[x][y] != '0' && oneGame.stonePos[x][y] == oneGame.stonePos[x + 1][y + 1])   //之前忘记了加一
             {
                 ++tmp;
-                if(tmp == 6) return true;
+                if(tmp == 5) return true;
             }
             else
-            {
                 tmp = 1;
-            }
+
             x++;
             y++;
         }
+
         if(start > 0)
             start--;
         else
