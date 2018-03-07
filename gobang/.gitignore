@@ -3,6 +3,7 @@
 
 *~
 *.autosave
+build-*
 *.a
 *.core
 *.moc
