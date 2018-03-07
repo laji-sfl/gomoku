@@ -1,4 +1,7 @@
 五子棋 gomoku
+
+支持Windows Ubuntu 16.04 Android 多个平台，Linux的不同版本还需要测试。
+
 主体的功能：
 	一台电脑人人对战
     网络人人对战
