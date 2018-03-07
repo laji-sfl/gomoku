@@ -74,7 +74,8 @@ public slots:
 signals:
     void timeEqual0();
 
-private:
+//子类需要用到，第一个版本就不麻烦了，先实现功能，在去优化代码
+public:
     GameData oneGame;  //记录游戏数据
     int startPoint;    //棋盘起始的位置
     int intvale;       //棋盘间隔大小

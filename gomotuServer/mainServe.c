@@ -18,7 +18,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define PORT 8901
+#define PORT 9996
 #define IP	"127.0.0.1"
 #define MAXNUM 128		//主要是listen的上限，epoll的限制不应该设置，之后在分析优化。
 

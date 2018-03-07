@@ -7,7 +7,7 @@ class humanComputePlay : public Board
 {
     Q_OBJECT
 public:
-    explit humanComputePlay(QWidget *parent = 0);
+    explicit humanComputePlay(QWidget *parent = 0);
 };
 
 #endif // HUMANCOMPUTEPLAY_H

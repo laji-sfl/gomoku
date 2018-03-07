@@ -147,6 +147,7 @@ void transmit(int fd, char *msg)
 //根据宏来区分的不同功能函数
 void login(int fd, char* msg)
 {
+	printf("\n ** %s ** \n", msg);
 	/*打开文件，查询是否有注册*/
 	char buf[36] = {0};						// 16 + 1 + 16 + 1 < 36
 	int yesOrNo = 0;

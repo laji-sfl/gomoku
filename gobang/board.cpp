@@ -264,6 +264,9 @@ void Board::setGameDataPosStep(int x, int y, char who)
     if(x == -1 || y == -1)
         return;
 
+    if(oneGame.stonePos[x][y] != '0')
+        return;
+
     oneGame.stonePos[x][y] = who;//内存棋盘
     step *oneStep = new step;   //步骤链表
     oneStep->x = x;
