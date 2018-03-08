@@ -45,15 +45,15 @@ public:
     virtual bool judgeWin();
 
     //设置label
-    virtual void setNameg(QString str); //昵称
-    virtual void setTimeg(QString str); //时间字符串
-    virtual void setPictureg(QString );  //图片的路径
-    virtual void setNamer(QString str);
-    virtual void setTimer(QString str);
-    virtual void setPicturer(QString );
+    void setNameg(QString str); //昵称
+    void setTimeg(QString str); //时间字符串
+    void setPictureg(QString );  //图片的路径,暂时不支持切换图片，等后续版本
+    void setNamer(QString str);
+    void setTimer(QString str);
+    void setPicturer(QString);
 
     //设置悔棋按钮和label
-    void setButtonLabel();
+    virtual void setButtonLabel();
     void setStartButton();
 
     //设置定时器

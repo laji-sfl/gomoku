@@ -1,26 +1,27 @@
 #include <QApplication>
 #include "board.h"
 #include "login.h"
+#include <QDebug>
 #include "choosepattern.h"
 #include "mainwnd.h"
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-    QString name("shilada");   //来在多个对话框之间传递
+    QString playNameG = QString("shilada");   //来在多个对话框之间传递
     char num = '1';       //模式
 
 //    Board gb_board;
 //    gb_board.show();
 
-    //登录判断对话框
-    Login *lo = new Login;
-    if(lo->exec() != QDialog::Accepted)
-        return -1;
-    name = lo->playername;
-    if(!lo->flag)
-        lo->socket->close();//暂时不懂，如果close已经断开的连接会有什么影响，or nothing
-    delete lo;      //及时结束回收资源
+//    //登录判断对话框
+//    Login *lo = new Login;
+//    if(lo->exec() != QDialog::Accepted)
+//        return -1;
+//    playNameG = lo->playername;
+//    if(!lo->flag)
+//        lo->socket->close();//暂时不懂，如果close已经断开的连接会有什么影响，or nothing
+//    delete lo;      //及时结束回收资源
 
     //选择游戏模式对话框
     ChoosePattern *cho = new ChoosePattern;
@@ -30,7 +31,8 @@ int main(int argc, char* argv[])
     delete cho;
 
     //游戏的主窗体
-    MainWnd wnd(num,name);    /* 不理解：为什么创建一个类对象，对象构造过程中，
+//    qDebug() << playNameG << "name";
+    MainWnd wnd(num,playNameG);    /* 不理解：为什么创建一个类对象，对象构造过程中，
                      *        又创建了一个对象，但是执行的show函数，
                      *        是从QWidget继承来的，没有把子类对象传递给
                      *        父类指针，构不成多态啊。

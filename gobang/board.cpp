@@ -2,6 +2,7 @@
 #include <QPainter> //用于绘制东西
 #include <QPen>     //控制画出来的颜色粗细等
 #include <QMouseEvent>
+#include <QPicture>
 #include <QColor>
 #include <QBrush>
 #include <QDebug>   //测试数据
@@ -12,8 +13,8 @@ Board::Board(QWidget *parent) : QFrame(parent)
     setWindowTitle("五子棋");
 
     //设置窗体的固定大小
-    setMaximumSize(680, 520);
-    setMinimumSize(680, 520);
+    setMaximumSize(660, 530);
+    setMinimumSize(660, 530);
 
     //初始化棋盘数据
     startPoint = 50;
@@ -24,8 +25,12 @@ Board::Board(QWidget *parent) : QFrame(parent)
     //初始化游戏数据步骤链表
     oneGame.stepList = new QList<step*>;
 
+    /*
+     * 父类构造函数执行了，和子类构造函数冲突了怎么办
+     * 是设计的不对吗？将父类指针传入是否就可以实现多态
+     */
     //设置按钮和label
-    setButtonLabel();
+//    setButtonLabel();
     setStartButton();
 
     //自定义的信号和槽，时间为0
@@ -86,8 +91,8 @@ void Board::setTimeLabel()
 void Board::setStartButton()
 {
     this->startGame = new QPushButton(QString("开始"), this);
-    this->startGame->setMaximumSize(70,30);
-    this->startGame->setMinimumSize(70,30);
+    this->startGame->setMaximumSize(80,40);
+    this->startGame->setMinimumSize(80,40);
     this->startGame->move(300,480);
     connect(startGame,&QPushButton::clicked,this,&Board::startTimerGame);
 }
@@ -130,48 +135,38 @@ void Board::setButtonLabel()
 void Board::setNameg(QString str)
 {
     this->gname->setText(str);
-    this->gname->move(500, 250);
-    this->gname->setMaximumSize(70,30);
-    this->gname->setMinimumSize(70,30);
+    this->gname->move(500, 145);    //这些数字位置都是根据实际情况调整的
 }
 void Board::setPictureg(QString )
 {
-    this->gpicture->setText(QString("tu pian"));
-    this->gpicture->move(500,200);
-    this->gpicture->setMaximumSize(70,30);
-    this->gpicture->setMinimumSize(70,30);
+    QPixmap pix(QString("/home/sfl/download/girl.jpeg"));
+    pix = pix.scaled(90,90);
+    this->gpicture->setPixmap(pix);
+    this->gpicture->move(500,50);
 }
 void Board::setTimeg(QString str)
 {
     this->gtime->setText(str);
-    this->gtime->move(500,100);
-    this->gtime->setMaximumSize(70,30);
-    this->gtime->setMinimumSize(70,30);
+    this->gtime->move(500,170);
     update();
-//    qDebug() << "setTimeg" << "--" << str;
 }
 void Board::setNamer(QString str)
 {
     this->rname->setText(str);
-    this->rname->move(500,300);
-    this->rname->setMaximumSize(70,30);
-    this->rname->setMinimumSize(70,30);
+    this->rname->move(500,425);
 }
 void Board::setPicturer(QString )
 {
-    this->rpicture->setText(QString("tu pian"));
-    this->rpicture->move(500,400);
-    this->rpicture->setMaximumSize(70,30);
-    this->rpicture->setMinimumSize(70,30);
+    QPixmap pix(QString("/home/sfl/download/girl.jpeg"));
+    pix = pix.scaled(80,80);
+    this->rpicture->setPixmap(pix);
+    this->rpicture->move(500,340);
 }
 void Board::setTimer(QString str)
 {
     this->rtime->setText(str);
-    this->rtime->move(500,480);
-    this->rtime->setMaximumSize(70,30);
-    this->rtime->setMinimumSize(70,30);
+    this->rtime->move(500,450);
     update();
-//    qDebug() << "setTimer" << "--" << str;
 }
 
 //悔棋

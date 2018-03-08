@@ -8,6 +8,8 @@ class humanComputePlay : public Board
     Q_OBJECT
 public:
     explicit humanComputePlay(QWidget *parent = 0);
+
+    void setButtonLabel();
 };
 
 #endif // HUMANCOMPUTEPLAY_H
