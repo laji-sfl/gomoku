@@ -95,11 +95,21 @@ void Board::setTimeLabel()
     QString str = QString("time:%1:%2").arg(minute).arg(second);
 
     //根据对手选择要设置的定时器
+//    select(str);
     if(gr == '1')
         setTimeg(str);
-    else if(gr == '2')
+    else
         setTimer(str);
 }
+
+////选择定时器的方向
+//void Board::select(QString str)
+//{
+//    if(gr == '1')
+//        setTimeg(str);  //靠上面的
+//    else
+//        setTimer(str);
+//}
 
 //设置开始按钮
 void Board::setStartButton()
@@ -149,6 +159,7 @@ void Board::setButtonLabel()
 void Board::setNameg(QString str)
 {
     this->gname->setText(str);
+    this->gname->setMinimumSize(90,20);
     this->gname->move(500, 145);    //这些数字位置都是根据实际情况调整的
 }
 void Board::setPictureg(QString )
@@ -167,8 +178,9 @@ void Board::setTimeg(QString str)
 }
 void Board::setNamer(QString str)
 {
-    this->rname->setText(str);
     this->rname->move(500,425);
+    this->rname->setMinimumSize(90,20);
+    this->rname->setText(str);
 }
 void Board::setPicturer(QString )
 {

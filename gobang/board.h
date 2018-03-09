@@ -58,13 +58,14 @@ public:
 
     //设置定时器
     void getTimer();
+//    virtual void select(QString str);
 
 //槽函数
 public slots:
     //点击悔棋的槽函数
     virtual void clickedPB();
     //定时器时间到
-    void setTimeLabel();
+    virtual void setTimeLabel();
     //开始游戏
     virtual void startTimerGame();
     //当时间为0

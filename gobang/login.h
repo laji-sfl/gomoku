@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QWidget>
 #include <QPushButton>
-//#include <QTextEdit>
 #include <QLineEdit>
 #include <QLabel>
 #include <QFormLayout>
@@ -22,7 +21,7 @@ public:
     void setWidget();
     QTcpSocket *socket;     //客户端socket
     QString playername;
-    bool flag,flag2;
+    bool flag2;
 
 //    void closeEvent(QCloseEvent *);
 
@@ -30,9 +29,8 @@ public slots:
     void inClicked();   //注册的槽函数
     void onClicked();   //登录的槽函数
     void readSock();    //读取服务器发来的消息
-    void setCloseBool();
+//    void setCloseBool();
     void printErr();
-//    void printErr1();
 //    void exitEXE();     //退出程序
 
 private:

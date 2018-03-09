@@ -24,13 +24,13 @@ public:
     //动作
     void recvMatch(std::string str);
     void recvMove(std::string str);
-    void recvTime();
     void recvUndo(std::string str);
     void recvTalk(std::string str);
 
     //重写函数
     void setButtonLabel();
     void mouseReleaseEvent(QMouseEvent *ev);
+//    void select(QString str);
 
 public slots:
     void startTimerGame();
@@ -49,6 +49,7 @@ private:
     bool        flagMat;    //是否匹配了，true匹配
     bool        flagStart;  //游戏是否开始了
     bool        flagWho;    //该谁了
+    bool        flagWait;   //是否加入匹配队列
     QTcpSocket  *socket;    //通信
     QPushButton *matchPlay; //开始匹配
     QPushButton *sendMsg;   //发送消息

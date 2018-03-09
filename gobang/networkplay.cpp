@@ -10,38 +10,63 @@ NetWorkPlay::NetWorkPlay(QWidget *parent) : Board(parent)
     flagCon = false;
     flagStart = false;
     flagMat = false;
-    flagWho = true;     //为ture就下棋
+    flagWait = false;
+    flagWho = false;     //为ture就下棋
     setButtonLabel();
     setMatch();
     setTalk();
     this->socket = new QTcpSocket(this);
     connect(socket, SIGNAL(readyRead()), this, SLOT(alreadyRead()));
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(printErr()));
+    connect(socket,&QTcpSocket::disconnected,this,[=](){flagCon = false;});
 }
 
 //tcp错误
 void NetWorkPlay::printErr()
 {
-//    qDebug() << "error tcp";
-    showMsg->append(QString("network error!"));
-
-    //回到选择对战模式的界面
+    showMsg->append(QString("系统：") + socket->errorString());
+    socket->close();
 }
 
 //定时器时间到了
 void NetWorkPlay::dealTime0()
 {
-    //发送给服务器
-    QByteArray buf;
-    buf.append('8');
-    socket->write(buf);
+    //不发给服务器了，没用
     showMsg->append(QString("系统：时间到!"));
 
+    if(this->gr == '1') //‘1’表示点了按钮
+        flagWho = false;//收到者是false，接收者是true
+    else
+        flagWho = true;
     gameTime = 90;  //重新计时
     setTimeg(QString("time: 1:30"));
     update();
+}
 
-    flagWho = false;
+void NetWorkPlay::setTimeLabel()
+{
+    //暂时先固定时间90秒
+    int minute = 0, second = 0;
+    minute = gameTime / 60;
+    if(minute == 1)
+        second = gameTime - 60;
+    else
+        second = gameTime;
+
+    //发射信号
+    if(gameTime == 0)
+        emit timeEqual0();
+
+    --gameTime;
+    QString str = QString("time:%1:%2").arg(minute).arg(second);
+
+    //根据对手选择要设置的定时器
+    if(flagWho)
+    {
+        setTimeg(str);
+    }
+    else
+        setTimer(str);
 }
 
 //一系列的动作
@@ -49,30 +74,46 @@ void NetWorkPlay::recvMatch(std::string str)
 {
     if(str[1] == '0')
     {
-        //匹配失败
-        flagMat = false;
-        showMsg->append(QString("系统：匹配失败！"));
+        if(str[2] == '1')
+        {
+            //服务器将他加入了匹配队列
+            flagWait = true;
+            flagMat = false;
+            showMsg->append(QString("系统：正在匹配。"));
+        }
+        else
+        {
+            //匹配失败
+            flagMat = false;
+            showMsg->append(QString("系统：匹配失败！"));
+        }
     }
     else if(str[1] == '1')
     {
         //匹配成功
         flagMat = true;
+        flagWait = false;
         showMsg->append(QString("系统：成功匹配。"));
         std::string heNa(str.begin() + 2,str.end());
         oneGame.heName = QString(heNa.c_str());
-        setNamer(QString("昵称：") + oneGame.heName);
+
+        QString he = QString("昵称：%1").arg(oneGame.heName);
+        QString my = QString("昵称：%1").arg(oneGame.myName);
     }
 }
 void NetWorkPlay::recvMove(std::string str)
 {
-    qDebug() << "recvMove:" << QString(str.c_str());
+//    qDebug() << "recvMove:" << QString(str.c_str());
     if(!flagStart){
     //判断是否是开始信号
         if(str[1] == '-'){
             Board::startTimerGame();
             this->gr = '2';     //接收者是2
             flagWho = false;    //接收者后下棋
+            flagStart = true;   //开始了
             showMsg->append(QString("系统：游戏已开始"));
+            this->setNameg(QString("name:") + oneGame.myName);
+            this->setNamer(QString("name:") + oneGame.heName);//写在这里是因为真的不知道什么原因，写在收到匹配函数中的时候没有效果
             return;
         }
     }
@@ -111,18 +152,8 @@ void NetWorkPlay::recvMove(std::string str)
 
     flagWho = true;     //接收到对面的之后就可以继续下棋的
 }
-void NetWorkPlay::recvTime()
-{
-    gameTime = 90;  //重新计时
-    setTimer(QString("time: 1:30"));
-    update();
-
-    flagWho = true;
-}
 void NetWorkPlay::recvUndo(std::string str)
 {
-    //暂时不支持携带悔棋理由
-
     // 1表示同意悔棋，0表示请求悔棋
     if(str[1] == '1')
     {
@@ -138,7 +169,35 @@ void NetWorkPlay::recvUndo(std::string str)
             bufNo.append(QString("51"));
             socket->write(bufNo);
 
-            backTwo(false); //对手下
+            auto tmp = oneGame.stepList->at(oneGame.stepList->length() - 1);
+            auto tmp1 = oneGame.stepList->at(oneGame.stepList->length() - 2);
+
+            if(tmp->gr == this->gr)
+            {
+                //弹出我的和他的，让他走
+                oneGame.stonePos[tmp->x][tmp->y] = '0';
+                oneGame.stonePos[tmp1->x][tmp1->y] = '0';
+                oneGame.stepList->removeLast();
+                oneGame.stepList->removeLast();
+                delete tmp;
+                delete tmp1;
+
+                flagWho = false;
+                gameTime = 90;  //重新计时
+                setTimer(QString("time: 1:30"));
+                update();
+            }
+            else
+            {
+                oneGame.stonePos[tmp->x][tmp->y] = '0';
+                oneGame.stepList->removeLast();
+                delete tmp;
+
+                flagWho = false;
+                gameTime = 90;
+                setTimer(QString("time: 1:30"));
+                update();
+            } //对手下
         }
         else    //不同意
         {
@@ -152,7 +211,10 @@ void NetWorkPlay::recvUndo(std::string str)
 }
 void NetWorkPlay::recvTalk(std::string str)
 {
-    showMsg->append(oneGame.heName + ":" + QString(str.c_str()));
+    QString ss = QString(str.c_str());
+    ss.remove(0,1);
+//    qDebug() << "talk msg:" << ss;
+    showMsg->append(oneGame.heName + ":" + ss);
 }
 
 //回滚两步
@@ -160,11 +222,13 @@ void NetWorkPlay::backTwo(bool flag)
 {
     //true表示玩家继续下棋，false表示对手继续
 
+    //true表示谁按得按钮
+
     //直接根据步骤链表修改内存棋盘，然后重绘
     auto tmp = oneGame.stepList->at(oneGame.stepList->length() - 1);
     auto tmp1 = oneGame.stepList->at(oneGame.stepList->length() - 2);
 
-    if(tmp->gr == this->gr)
+    if(tmp->gr != this->gr)
     {
         //弹出我的和他的，让他走
         oneGame.stonePos[tmp->x][tmp->y] = '0';
@@ -186,7 +250,7 @@ void NetWorkPlay::backTwo(bool flag)
         delete tmp;
 
         flagWho = flag;
-        gameTime = 90;  //重新计时
+        gameTime = 90;
         setTimer(QString("time: 1:30"));
         update();
     }
@@ -222,9 +286,6 @@ void NetWorkPlay::judgeMsg(std::string str)
     case '6':
         recvTalk(str);
         break;
-    case '8':
-        recvTime();
-        break;
     default:
         qDebug() << "检查一下服务器代码";
         break;
@@ -249,6 +310,9 @@ void NetWorkPlay::mouseReleaseEvent(QMouseEvent *ev)
     //计算出点击的坐标
     computePos(ev->pos(), x, y);
 
+    if(oneGame.stonePos[x][y] != '0')   //点击无效
+        return;
+
     //变化棋盘
     setTimeg(QString("time:1:30"));
     this->gameTime = 90;
@@ -266,7 +330,6 @@ void NetWorkPlay::mouseReleaseEvent(QMouseEvent *ev)
     else
         buf.append(QString("%1").arg(y));
 
-    qDebug() << "buf:" << buf;
     socket->write(buf);
     flagWho = false;
 
@@ -282,8 +345,14 @@ void NetWorkPlay::startTimerGame()
         return;
     if(flagStart)
         return;
+    if(!flagCon)
+    {
+        showMsg->append(QString("系统：请先匹配"));
+        return;
+    }
 
     flagStart = true;
+    flagWho = true;
     QByteArray buf;
     buf.append('4');
     buf.append('-');
@@ -291,46 +360,22 @@ void NetWorkPlay::startTimerGame()
     Board::startTimerGame();    //启动定时器开始游戏
     showMsg->append(QString("系统：游戏已开始"));
     this->gr = '1'; /*谁先点击的开始按钮谁是1，另一个就是2*/
+    this->setNamer(QString("name:") + oneGame.heName);
+    this->setNameg(QString("name:") + oneGame.myName);
 }
 
-//定时器槽函数
-void NetWorkPlay::setTimeLabel()
-{
-//    qDebug() << "zou le yi xia";
-
-    //暂时先固定时间90秒
-    int minute = 0, second = 0;
-    minute = gameTime / 60;
-    if(minute == 1)
-        second = gameTime - 60;
-    else
-        second = gameTime;
-
-    //发射信号
-    if(gameTime == 0)
-        emit timeEqual0();
-
-    --gameTime;
-    QString str = QString("time:%1:%2").arg(minute).arg(second);
-
-    //根据对手选择要设置的定时器
-    if(flagWho)
-        setTimeg(str);
-    else
-        setTimer(str);
-}
 
 //读取消息
 void NetWorkPlay::alreadyRead()
 {
     QByteArray buf = socket->readAll();
-//    qDebug() << buf;
+//    qDebug() << "recv msg:" << buf;
 
     //根据消息进行判断
     judgeMsg(buf.toStdString());
 }
 
-//开始匹配按钮
+//设置匹配按钮
 void NetWorkPlay::setMatch()
 {
     this->matchPlay = new QPushButton(QString("匹配"), this);
@@ -339,9 +384,15 @@ void NetWorkPlay::setMatch()
     matchPlay->setMinimumSize(80, 40);
     connect(matchPlay, SIGNAL(clicked(bool)),this,SLOT(clickMatch()));
 }
+
+//点击开始匹配
 void NetWorkPlay::clickMatch()
 {
     if(flagMat)
+        return;
+    if(flagWait)
+        return;
+    if(flagStart)
         return;
 
     //建立网络连接
@@ -357,9 +408,6 @@ void NetWorkPlay::clickMatch()
 
     //发送系统通知
     showMsg->append(QString("系统：正在匹配对手"));
-
-    //test
-    flagMat = true;
 }
 
 //发送
@@ -455,16 +503,24 @@ void NetWorkPlay::gameOver()
     int ret = QMessageBox::warning(this,"GameOver","是否更换对手？",QMessageBox::Yes | QMessageBox::No,QMessageBox::No);
     if(QMessageBox::Yes == ret)
     {
+        /*正常来讲，如果对方先于自己点了是，那么服务器会收到那个人的数据，
+         * 然后将两个人的tcp都关闭，那么自己就发不出去消息了，没有影响
+         * 就算发出去了，服务器已经将资源释放了（服务器有锁，总会有一个先来后到）
+         * 没有影响。
+         */
+
         QByteArray buf;
         buf.append('7');
         buf.append(oneGame.myName);
 
         flagMat = false;
         flagWho = false;
+        flagWait = false;
 
-        socket->write(buf);
-        showMsg->append(QString("系统：重新匹配。"));
-        flagMat = false;
+        if(flagCon) //连接着服务器才能发送
+            socket->write(buf);
+
+        showMsg->append(QString("系统：请点击按钮开始匹配"));
     }
     else
     {

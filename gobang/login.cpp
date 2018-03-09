@@ -8,7 +8,6 @@ Login::Login(QWidget *parent) : QDialog(parent)
 {
     //将控件初始化
     this->setWidget();
-    flag = false;   // true 表示连接已经断开
     flag2 = false;  // true 表示注册成功了
 
     //信号与槽
@@ -20,14 +19,13 @@ Login::Login(QWidget *parent) : QDialog(parent)
     socket->connectToHost(QHostAddress("127.0.0.1"), 9996);
     connect(socket, SIGNAL(readyRead()), this, SLOT(readSock()));
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(printErr()));
-    connect(socket, SIGNAL(disconnected()),this,SLOT(setCloseBool()));//服务器会主动断开连接，当返回11之后。
+//    connect(socket, SIGNAL(disconnected()),this,SLOT(setCloseBool()));//服务器会主动断开连接，当返回11之后。
 }
 
-void Login::setCloseBool()
-{
-    qDebug() << "断开连接诶";
-    flag = true;    //表示连接已经断开
-}
+//void Login::setCloseBool()
+//{
+//    qDebug() << "断开连接诶";
+//}
 
 /*
  * 结束程序，需要了解，执行close的原理是否会释放内存，是否结束程序，是否向下执行
@@ -41,18 +39,22 @@ void Login::setCloseBool()
 
 void Login::printErr()
 {
-    QMessageBox::warning(this, "waring", "tcp error !", QMessageBox::Yes, QMessageBox::Yes);
+//    if(flag)   //断开连接之后就不接受错误了
+//    {
+//        qDebug() << "error:" << flag;
+//        return;
+//    }
+
+//    qDebug() << "error:" << flag;
+
+    QMessageBox::warning(this, "waring", socket->errorString(), QMessageBox::Yes, QMessageBox::Yes);
 }
-//void Login::printErr1()
-//{
-//    qDebug() << "show a wrror !!!!!!!!!!!!!!!";
-//}
 
 //读取服务器的数据
 void Login::readSock()
 {
     QByteArray str = socket->readAll();
-    qDebug() << "jie shou:" << str;
+//    qDebug() << "jie shou:" << str;
     if(str.at(0) == '1')
     {
         if(str.at(1) == '1')
@@ -88,20 +90,6 @@ void Login::readSock()
 //槽函数登录
 void Login::inClicked()
 {
-/************************/
-    //for test
-    accept();
-    return;
-/************************/
-
-    //已经注册成功
-    if(flag2)
-        accept();
-
-    //如果已经断开连接
-    if(flag)
-        socket->connectToHost(QHostAddress("127.0.0.1"), 9996);
-
     //获取控件的值,并判断合法性
     QString strName = this->name->text();
     QString strPwd = this->pwd->text();
@@ -128,16 +116,15 @@ void Login::inClicked()
     str.append(':');
     str.append(strPwd);
     str.append('&');
-    qDebug() << "send:" << str;
+//    qDebug() << "send:" << str;
     socket->write(str);
 }
 
 //槽函数注册
 void Login::onClicked()
 {
-    //如果已经断开连接
-    if(flag)
-        socket->connectToHost(QHostAddress("127.0.0.1"), 9996);
+    if(flag2)   //已经注册了
+        return;
 
     //获取控件的值,并判断合法性
     QString strName = this->name->text();
@@ -170,6 +157,7 @@ void Login::setWidget()
     this->pwdLabel = new QLabel(QString("password:"));
     this->name = new QLineEdit();
     this->pwd = new QLineEdit();
+    pwd->setEchoMode(QLineEdit::Password);
     this->sign_in = new QPushButton(QString("登录"));
     this->sign_on = new QPushButton(QString("注册"));
 
