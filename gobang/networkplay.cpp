@@ -24,6 +24,8 @@ void NetWorkPlay::printErr()
 {
 //    qDebug() << "error tcp";
     showMsg->append(QString("network error!"));
+
+    //回到选择对战模式的界面
 }
 
 //定时器时间到了
@@ -124,66 +126,19 @@ void NetWorkPlay::recvUndo(std::string str)
     // 1表示同意悔棋，0表示请求悔棋
     if(str[1] == '1')
     {
-        //直接根据步骤链表修改内存棋盘，然后重绘
-        auto last = oneGame.stepList->end() - 1;
-        if((*last)->gr == this->gr)
-        {
-            //弹出我的和他的，让他走
-            auto tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-            oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-            tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-            oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-
-            flagWho = false;
-            gameTime = 90;  //重新计时
-            setTimer(QString("time: 1:30"));
-            update();
-        }
-        else
-        {
-            auto tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-            oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-
-            flagWho = false;
-            gameTime = 90;  //重新计时
-            setTimer(QString("time: 1:30"));
-            update();
-        }
+        backTwo(true);  //玩家下
     }
     else if(str[1] == '0')
     {
         //弹出对话框，让选择
-        int ret = QMessageBox::warning(NULL,"悔棋", "是否同意悔棋？",QMessageBox::Yes | QMessageBox::No,QMessageBox::Yes);
+        auto ret = QMessageBox::warning(this,"悔棋", "是否同意悔棋？",QMessageBox::Yes | QMessageBox::No,QMessageBox::Yes);
         if(ret == QMessageBox::Yes)
         {
             QByteArray bufNo;
             bufNo.append(QString("51"));
             socket->write(bufNo);
 
-            auto last = oneGame.stepList->end() - 1;
-            if((*last)->gr == this->gr)
-            {
-                //弹出我的和他的，让他走
-                auto tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-                oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-                tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-                oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-
-                flagWho = false;
-                gameTime = 90;  //重新计时
-                setTimer(QString("time: 1:30"));
-                update();
-            }
-            else
-            {
-                auto tmp = oneGame.stepList->erase(oneGame.stepList->end() - 1);
-                oneGame.stonePos[(*tmp)->x][(*tmp)->y] = '0';
-
-                flagWho = false;
-                gameTime = 90;  //重新计时
-                setTimer(QString("time: 1:30"));
-                update();
-            }
+            backTwo(false); //对手下
         }
         else    //不同意
         {
@@ -200,9 +155,49 @@ void NetWorkPlay::recvTalk(std::string str)
     showMsg->append(oneGame.heName + ":" + QString(str.c_str()));
 }
 
+//回滚两步
+void NetWorkPlay::backTwo(bool flag)
+{
+    //true表示玩家继续下棋，false表示对手继续
+
+    //直接根据步骤链表修改内存棋盘，然后重绘
+    auto tmp = oneGame.stepList->at(oneGame.stepList->length() - 1);
+    auto tmp1 = oneGame.stepList->at(oneGame.stepList->length() - 2);
+
+    if(tmp->gr == this->gr)
+    {
+        //弹出我的和他的，让他走
+        oneGame.stonePos[tmp->x][tmp->y] = '0';
+        oneGame.stonePos[tmp1->x][tmp1->y] = '0';
+        oneGame.stepList->removeLast();
+        oneGame.stepList->removeLast();
+        delete tmp;
+        delete tmp1;
+
+        flagWho = flag;
+        gameTime = 90;  //重新计时
+        setTimer(QString("time: 1:30"));
+        update();
+    }
+    else
+    {
+        oneGame.stonePos[tmp->x][tmp->y] = '0';
+        oneGame.stepList->removeLast();
+        delete tmp;
+
+        flagWho = flag;
+        gameTime = 90;  //重新计时
+        setTimer(QString("time: 1:30"));
+        update();
+    }
+}
+
 //悔棋按钮,槽函数
 void NetWorkPlay::clickedPB()
 {
+    if(oneGame.stepList->length() < 2) //没有棋子和只有一个子的时候不允许悔棋
+        return;
+
     //发送悔棋请求
     QByteArray buf;
     buf.append(QString("50"));
@@ -402,7 +397,7 @@ void NetWorkPlay::setTalk()
     showMsg->setMaximumSize(150,110);
     showMsg->setMinimumSize(150,110);
     //设置只读
-    showMsg->setEnabled(false);
+    showMsg->setReadOnly(true);
 }
 
 //设置悔棋和label
@@ -426,10 +421,10 @@ void NetWorkPlay::setButtonLabel()
 //    qDebug() << oneGame.myName << oneGame.stepList;
     this->setNameg(QString("昵称：") + oneGame.myName);
     this->setPictureg(QString("kk"));
-    this->setTimeg(QString("time: 1:30"));
+    this->setTimeg(QString("time: 0:00"));
     this->setNamer(QString("昵称：") + oneGame.heName);
     this->setPicturer(QString("asd"));
-    this->setTimer(QString("time: 1:30"));
+    this->setTimer(QString("time: 0:00"));
     update();//重新绘制
 }
 
@@ -445,8 +440,9 @@ void NetWorkPlay::gameOver()
     //清空链表，棋盘
     for(auto tmp = oneGame.stepList->begin();oneGame.stepList->end() != tmp; ++tmp)
     {
-        delete *tmp;
+        delete (*tmp);
     }
+    oneGame.stepList->clear();
     for(int i = 0;i < 15;++i)
     {
         for(int j = 0;j < 15; ++j)
@@ -456,7 +452,7 @@ void NetWorkPlay::gameOver()
     }
 
     //提示是否重新匹配
-    int ret = QMessageBox::warning(NULL,"GameOver","是否更换对手？",QMessageBox::Yes | QMessageBox::No,QMessageBox::No);
+    int ret = QMessageBox::warning(this,"GameOver","是否更换对手？",QMessageBox::Yes | QMessageBox::No,QMessageBox::No);
     if(QMessageBox::Yes == ret)
     {
         QByteArray buf;

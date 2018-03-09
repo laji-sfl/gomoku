@@ -41,8 +41,7 @@ void Login::setCloseBool()
 
 void Login::printErr()
 {
-//    qDebug() << "show a wrror !!!!!!!!!!!!!!!";
-    QMessageBox::warning(NULL, "waring", "tcp error !", QMessageBox::Yes, QMessageBox::Yes);
+    QMessageBox::warning(this, "waring", "tcp error !", QMessageBox::Yes, QMessageBox::Yes);
 }
 //void Login::printErr1()
 //{
@@ -62,7 +61,7 @@ void Login::readSock()
         }
         else
         {
-            QMessageBox::warning(NULL, "waring", "please first register!", QMessageBox::Yes, QMessageBox::Yes);
+            QMessageBox::warning(this, "waring", "please first register!", QMessageBox::Yes, QMessageBox::Yes);
             return;
         }
     }
@@ -70,18 +69,18 @@ void Login::readSock()
     {
         if(str.at(1) == '1')
         {
-            QMessageBox::warning(NULL, "tip", "register victory!", QMessageBox::Yes, QMessageBox::Yes);
+            QMessageBox::warning(this, "tip", "register victory!", QMessageBox::Yes, QMessageBox::Yes);
             flag2 = true;
         }
         else
         {
-            QMessageBox::warning(NULL, "waring", "name all exist!", QMessageBox::Yes, QMessageBox::Yes);
+            QMessageBox::warning(this, "waring", "name all exist!", QMessageBox::Yes, QMessageBox::Yes);
             return;
         }
     }
     else
     {
-        QMessageBox::warning(NULL, "waring", "can not login!", QMessageBox::Yes, QMessageBox::Yes);
+        QMessageBox::warning(this, "waring", "can not login!", QMessageBox::Yes, QMessageBox::Yes);
         return;
     }
 }
@@ -110,7 +109,7 @@ void Login::inClicked()
     //服务器的要求
     if(strName.length() > 16 || strPwd.length() > 16)
     {
-        QMessageBox::warning(NULL, "waring", "can not be empty!", QMessageBox::Yes, QMessageBox::Yes);
+        QMessageBox::warning(this, "waring", "can not be empty!", QMessageBox::Yes, QMessageBox::Yes);
         return;
     }
 
@@ -118,7 +117,7 @@ void Login::inClicked()
 
     if(strName.isEmpty() || strPwd.isEmpty())
     {
-        QMessageBox::warning(NULL, "waring", "can not be empty!", QMessageBox::Yes, QMessageBox::Yes);
+        QMessageBox::warning(this, "waring", "can not be empty!", QMessageBox::Yes, QMessageBox::Yes);
         return;
     }
 
@@ -146,7 +145,7 @@ void Login::onClicked()
 
     if(strName.isEmpty() || strPwd.isEmpty())
     {
-        QMessageBox::warning(NULL, "warning", "direct input name and password click button!", QMessageBox::Yes, QMessageBox::Yes);
+        QMessageBox::warning(this, "warning", "direct input name and password click button!", QMessageBox::Yes, QMessageBox::Yes);
         return;
     }
 

@@ -29,12 +29,26 @@ Board::Board(QWidget *parent) : QFrame(parent)
      * 父类构造函数执行了，和子类构造函数冲突了怎么办
      * 是设计的不对吗？将父类指针传入是否就可以实现多态
      */
-    //设置按钮和label
-//    setButtonLabel();
     setStartButton();
+    this->reChoose = new QPushButton("重新选择模式",this);
+    connect(this->reChoose, SIGNAL(clicked(bool)),this,SLOT(recvChoose()));
 
     //自定义的信号和槽，时间为0
     connect(this,SIGNAL(timeEqual0()),this,SLOT(dealTime0()));
+}
+
+void Board::recvChoose()
+{
+    /*
+     *  暂时的思路：
+     *      将选择对话框的窗体按钮设置为发送信号给mainwnd，
+     *      mainwnd根据接收的到的信号创建窗体，
+     *      点击重新选择后，分别给choose和mainwnd发送信号，
+     *      让他们显示出来。
+     *
+     *  或者：添加一个窗口管理类，负责创建窗口释放窗口，窗口与其
+     *       通过信号沟通。
+     */
 }
 
 Board::~Board()
@@ -91,7 +105,7 @@ void Board::setTimeLabel()
 void Board::setStartButton()
 {
     this->startGame = new QPushButton(QString("开始"), this);
-    this->startGame->setMaximumSize(80,40);
+//    this->startGame->setMaximumSize(80,40);
     this->startGame->setMinimumSize(80,40);
     this->startGame->move(300,480);
     connect(startGame,&QPushButton::clicked,this,&Board::startTimerGame);
@@ -110,7 +124,7 @@ void Board::setButtonLabel()
     //显示悔棋按钮
     this->pullBack = new QPushButton(this);
     this->pullBack->setText(QString("悔棋"));
-    this->pullBack->setMaximumSize(70,30);
+//    this->pullBack->setMaximumSize(70,30);
     this->pullBack->setMinimumSize(70,30);
     this->pullBack->move(200,480);
     connect(pullBack,&QPushButton::clicked,this,&Board::clickedPB);
@@ -139,7 +153,7 @@ void Board::setNameg(QString str)
 }
 void Board::setPictureg(QString )
 {
-    QPixmap pix(QString("/home/sfl/download/girl.jpeg"));
+    QPixmap pix(QString("./girl.jpeg"));
     pix = pix.scaled(90,90);
     this->gpicture->setPixmap(pix);
     this->gpicture->move(500,50);
@@ -147,6 +161,7 @@ void Board::setPictureg(QString )
 void Board::setTimeg(QString str)
 {
     this->gtime->setText(str);
+    this->gtime->setMinimumSize(50,20);
     this->gtime->move(500,170);
     update();
 }
@@ -157,14 +172,15 @@ void Board::setNamer(QString str)
 }
 void Board::setPicturer(QString )
 {
-    QPixmap pix(QString("/home/sfl/download/girl.jpeg"));
-    pix = pix.scaled(80,80);
+    QPixmap pix(QString("./girl3.jpg"));
+    pix = pix.scaled(90,90);
     this->rpicture->setPixmap(pix);
-    this->rpicture->move(500,340);
+    this->rpicture->move(500,330);
 }
 void Board::setTimer(QString str)
 {
     this->rtime->setText(str);
+    this->gtime->setMinimumSize(50,20);
     this->rtime->move(500,450);
     update();
 }
@@ -254,13 +270,13 @@ void Board::computePos(QPoint pos, int &x, int &y)
 }
 
 //设置游戏的棋子的坐标和下棋的步骤
-void Board::setGameDataPosStep(int x, int y, char who)
+bool Board::setGameDataPosStep(int x, int y, char who)
 {
     if(x == -1 || y == -1)
-        return;
+        return false;
 
     if(oneGame.stonePos[x][y] != '0')
-        return;
+        return false;
 
     oneGame.stonePos[x][y] = who;//内存棋盘
     step *oneStep = new step;   //步骤链表
@@ -268,6 +284,7 @@ void Board::setGameDataPosStep(int x, int y, char who)
     oneStep->y = y;
     oneStep->gr = who;
     oneGame.stepList->append(oneStep);
+    return true;
 }
 
 //鼠标事件

@@ -19,6 +19,7 @@ public:
     void setTalk();
     void judgeMsg(std::string str);//根据消息的内容执行不同的动作
     void gameOver();
+    void backTwo(bool flag);
 
     //动作
     void recvMatch(std::string str);

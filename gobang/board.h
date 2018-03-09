@@ -39,7 +39,7 @@ public:
     void computePos(QPoint pos, int &x, int &y);//计算出棋盘的坐标
 
     //设置游戏数据
-    virtual void setGameDataPosStep(int x, int y, char who);
+    virtual bool setGameDataPosStep(int x, int y, char who);
 
     //判断输赢
     virtual bool judgeWin();
@@ -69,6 +69,8 @@ public slots:
     virtual void startTimerGame();
     //当时间为0
     virtual void dealTime0();
+    //重新选择
+    void recvChoose();
 
 //自定义信号
 signals:
@@ -82,6 +84,7 @@ public:
     char gr;           //绿的还是红的,是否开始游戏
     QPushButton *pullBack;//后悔键
     QPushButton *startGame; //开始游戏
+    QPushButton *reChoose;  //重新选择
     QLabel *gtime;   //计时器
     QLabel *gname;   //昵称
     QLabel *gpicture;//头像

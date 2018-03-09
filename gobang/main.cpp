@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     if(cho->exec() != QDialog::Accepted)
         return -1;
     num = cho->num;
-    delete cho;
+//    delete cho;   //不能释放需要让重新选择
 
     //游戏的主窗体
 //    qDebug() << playNameG << "name";
