@@ -18,8 +18,8 @@
 #include <string.h>
 #include <errno.h>
 
-#define PORT 9996
-#define IP	"127.0.0.1"
+#define PORT 9669
+#define IP	"176.122.166.8"
 #define MAXNUM 128		//主要是listen的上限，epoll的限制不应该设置，之后在分析优化。
 
 /* 创建全局的数据结构 */
@@ -96,7 +96,7 @@ int main(void)
 				while(1) {									//边缘触发+非阻塞fd，需要循环读取完
 					if((confd = accept(sockfd, (struct sockaddr *)&clie_addr, &clie_addr_len)) == -1){
 						if(errno == EAGAIN || errno == EWOULDBLOCK) {//判断连接是否处理完
-							printf("accept EAGAIN, OK!\n");
+//							printf("accept EAGAIN, OK!\n");
 							break;
 						}
 						else {
@@ -108,11 +108,12 @@ int main(void)
 					event.data.fd = confd;
 					event.events = EPOLLIN | EPOLLET;
 					epoll_ctl(epofd, EPOLL_CTL_ADD, confd, &event);	//将confd添加进epoll的监听
+					printf("\nnew connected fd:%d\n",confd);
 				}//accept
 				continue;	//直接开始下一个的处理
 			}//sockfd == ptr_events[i].data.fd
 			else {
-				printf("create new thread to handle fd: %d!\n", ptr_events[i].data.fd);
+//				printf("create new thread to handle fd: %d!\n\n", ptr_events[i].data.fd);
 				newThread(ptr_events[i].data.fd);	//创建新的线程
 			}
 		}//for(0 --> fdNum)
