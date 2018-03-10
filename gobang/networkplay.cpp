@@ -18,7 +18,11 @@ NetWorkPlay::NetWorkPlay(QWidget *parent) : Board(parent)
     this->socket = new QTcpSocket(this);
     connect(socket, SIGNAL(readyRead()), this, SLOT(alreadyRead()));
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(printErr()));
-    connect(socket,&QTcpSocket::disconnected,this,[=](){flagCon = false;});
+    connect(socket,&QTcpSocket::disconnected,this,[=](){
+        flagCon = false;
+        flagMat = false;
+        flagWho = false;
+        flagWait = false;});
 }
 
 //tcp错误
@@ -103,7 +107,6 @@ void NetWorkPlay::recvMatch(std::string str)
 }
 void NetWorkPlay::recvMove(std::string str)
 {
-//    qDebug() << "recvMove:" << QString(str.c_str());
     if(!flagStart){
     //判断是否是开始信号
         if(str[1] == '-'){
@@ -213,7 +216,6 @@ void NetWorkPlay::recvTalk(std::string str)
 {
     QString ss = QString(str.c_str());
     ss.remove(0,1);
-//    qDebug() << "talk msg:" << ss;
     showMsg->append(oneGame.heName + ":" + ss);
 }
 
@@ -369,7 +371,6 @@ void NetWorkPlay::startTimerGame()
 void NetWorkPlay::alreadyRead()
 {
     QByteArray buf = socket->readAll();
-//    qDebug() << "recv msg:" << buf;
 
     //根据消息进行判断
     judgeMsg(buf.toStdString());
@@ -466,7 +467,6 @@ void NetWorkPlay::setButtonLabel()
     rtime = new QLabel(this);
     rpicture = new QLabel(this);
     rname = new QLabel(this);
-//    qDebug() << oneGame.myName << oneGame.stepList;
     this->setNameg(QString("昵称：") + oneGame.myName);
     this->setPictureg(QString("kk"));
     this->setTimeg(QString("time: 0:00"));
@@ -521,10 +521,6 @@ void NetWorkPlay::gameOver()
             socket->write(buf);
 
         showMsg->append(QString("系统：请点击按钮开始匹配"));
-    }
-    else
-    {
-        update();
     }
     update();
 }

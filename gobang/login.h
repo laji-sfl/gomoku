@@ -23,15 +23,11 @@ public:
     QString playername;
     bool flag2;
 
-//    void closeEvent(QCloseEvent *);
-
 public slots:
     void inClicked();   //注册的槽函数
     void onClicked();   //登录的槽函数
     void readSock();    //读取服务器发来的消息
-//    void setCloseBool();
     void printErr();
-//    void exitEXE();     //退出程序
 
 private:
     QFormLayout *formLayout;//便签输入布局

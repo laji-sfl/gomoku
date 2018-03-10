@@ -1,8 +1,4 @@
 #存储已经注册的用户名和密码
 #格式：name：pwd&		0<name<16 0<pwd<16
-name:123456&
-qw:as&
 asd:123&
 qwe:123&
-qww:123&
-qwd:123&

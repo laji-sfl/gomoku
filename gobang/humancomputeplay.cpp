@@ -19,7 +19,6 @@ void humanComputePlay::setButtonLabel()
     //显示悔棋按钮
     this->pullBack = new QPushButton(this);
     this->pullBack->setText(QString("悔棋"));
-//    this->pullBack->setMaximumSize(80,40);
     this->pullBack->setMinimumSize(80,40);
     this->pullBack->move(200,480);
     connect(pullBack,&QPushButton::clicked,this,&Board::clickedPB);

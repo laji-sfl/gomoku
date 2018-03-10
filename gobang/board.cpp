@@ -72,7 +72,6 @@ void Board::getTimer()
 //时间等于0的槽函数
 void Board::dealTime0()
 {
-//    qDebug() << "time over ";
     //暂时父类不做处理
 }
 
@@ -95,27 +94,16 @@ void Board::setTimeLabel()
     QString str = QString("time:%1:%2").arg(minute).arg(second);
 
     //根据对手选择要设置的定时器
-//    select(str);
     if(gr == '1')
         setTimeg(str);
     else
         setTimer(str);
 }
 
-////选择定时器的方向
-//void Board::select(QString str)
-//{
-//    if(gr == '1')
-//        setTimeg(str);  //靠上面的
-//    else
-//        setTimer(str);
-//}
-
 //设置开始按钮
 void Board::setStartButton()
 {
     this->startGame = new QPushButton(QString("开始"), this);
-//    this->startGame->setMaximumSize(80,40);
     this->startGame->setMinimumSize(80,40);
     this->startGame->move(300,480);
     connect(startGame,&QPushButton::clicked,this,&Board::startTimerGame);
@@ -134,7 +122,6 @@ void Board::setButtonLabel()
     //显示悔棋按钮
     this->pullBack = new QPushButton(this);
     this->pullBack->setText(QString("悔棋"));
-//    this->pullBack->setMaximumSize(70,30);
     this->pullBack->setMinimumSize(70,30);
     this->pullBack->move(200,480);
     connect(pullBack,&QPushButton::clicked,this,&Board::clickedPB);
@@ -153,7 +140,6 @@ void Board::setButtonLabel()
     this->setPicturer(QString("kk"));
     this->setTimer(QString("shi jian"));
     update();//重新绘制
-//    qDebug() << "set hui qi and label";
 }
 //设置label
 void Board::setNameg(QString str)
@@ -201,7 +187,6 @@ void Board::setTimer(QString str)
 void Board::clickedPB()
 {
     //父类什么也不做
-//    qDebug() << "hui qi";
 }
 
 //绘制棋盘
