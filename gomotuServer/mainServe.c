@@ -51,7 +51,7 @@ int main(void)
 	int 	clie_addr_len = 0;					//连接者地址结构的长度
 	struct sockaddr_in 	serv_addr, clie_addr;	//本地结构，连接者结构
 	struct epoll_event 	event;					//监听事件
-	struct epoll_event 	*ptr_events;			//监听事件数组的首地址
+	struct epoll_event 	*ptr_events = NULL;			//监听事件数组的首地址
 
 	//创建链表
 	alreadyMt = createList();
