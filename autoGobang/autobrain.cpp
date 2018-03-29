@@ -1,8 +1,9 @@
 #include "autobrain.h"
 #include <algorithm>
 
-AutoBrain::AutoBrain() : degree('1')
+AutoBrain::AutoBrain() : degree(1)//难度初始化为1
 {
+    //初始化棋盘
     for(int i = 0;i < 15; ++i)
     {
         for(int j = 0;j < 15; ++j)
@@ -18,19 +19,24 @@ AutoBrain::~AutoBrain()
 }
 
 //自己的算法
+//传入敌人的下棋位置，传出电脑的下棋位置
 void AutoBrain::autoMove(int &x, int &y)
 {
-    chess[x][y] = '1';
-    canMovePos();
-    setValue();
-    Pos max = *posSet.begin();
+    chess[x][y] = '1';  //对方走的步骤
+    canMovePos();       //所有电脑可以走的位置
+    setValue();         //计算电脑可以走的位置的权值
+
+    Pos max = *posSet.begin();  //寻找权值最大的节点
     for(auto tmp : posSet)
     {
         if(tmp.value > max.value)
             max = tmp;
     }
-    x = max.x_axis;
+
+    x = max.x_axis;     //设置电脑走的位置
     y = max.y_axis;
+
+    chess[x][y] = '2';
 }
 
 //参考的算法
@@ -42,14 +48,12 @@ void AutoBrain::autoMove(int &x, int &y)
 //计算此时棋盘上可以走的位置
 void AutoBrain::canMovePos()
 {
-    int extendNum = degree - '0';//向外扩展的个数
-
     for(int i = 0;i < 15; ++i)
     {
         for(int j = 0;j < 15; ++j)
         {
             if(this->chess[i][j] == '1' || this->chess[i][j] == '2')
-                this->setPos(extendNum,i,j);//将这个点周围的点写入链表
+                this->setPos(i, j);//将这个点周围的点写入链表
         }
     }
 
@@ -58,62 +62,75 @@ void AutoBrain::canMovePos()
 }
 
 //根据难度设置链表的点
-void AutoBrain::setPos(int degr, int x, int y)
+void AutoBrain::setPos(int x, int y)
 {
-    //横线
-    for(int i = getMin(x,degr);i <= getMax(x,degr); ++i)//向左向右扩展degr个子
-    {
-        if(chess[i][y] == '0')
-        {
-            chess[i][y] = '3';
-            Pos tmp = {i,y,0};
-            posSet.push_back(tmp);
-        }
-    }
     //竖线
-    for(int i = getMin(y,degr);i <= getMax(y,degr); ++i)
+    for(int i = 1;i <= degree; ++i)
     {
-        if(chess[x][i] == '0')
+        //如果棋盘上是空的，并且这个子没有超出棋盘范围，那么就可以走
+        if(chess[x-i][y] == '0' && x-i >= 0)
         {
-            chess[x][i] = '3';
-            Pos tmp = {x,i,0};
+            Pos tmp{x-i,y,0};
             posSet.push_back(tmp);
+            chess[x-i][y] = '3';
+        }
+        if (chess[x+i][y] == '0' && x+i <= 14)
+        {
+            Pos tmp2{x+i,y,0};
+            posSet.push_back(tmp2);
+            chess[x+i][y] = '3';
         }
     }
-    //斜线
-    int beginX = x - degr,beginY = y - degr;    //起始的坐标
 
-    for(int i = 0;i <= 2 * degr; ++i)   //共循环两倍的难度的个数
+    //横线
+    for(int i = 1;i <= degree; ++i)
     {
-        if(beginX >= 0 || beginY >= 0 || beginX <= 14 || beginY <= 14)
+        if(chess[x][y-i] == '0' && y-i >= 0)
         {
-            if(chess[beginX][beginY] == '0')
-            {
-                chess[beginX][beginY] = '3';
-                Pos tmp = {beginX,beginY,0};
-                posSet.push_back(tmp);
-            }
+            Pos tmp{x,y-i,0};
+            posSet.push_back(tmp);
+            chess[x][y-i] = '3';
         }
-        ++beginX;   //不管怎样每次循环位置都要变
-        ++beginY;
+        if(chess[x][y+i] == '0' && y+i <= 14)
+        {
+            Pos tmp2{x,y+i,0};
+            posSet.push_back(tmp2);
+            chess[x][y+i] = '3';
+        }
+    }
+
+    //斜线
+    for(int i = 1;i <= degree; ++i)
+    {
+        if(chess[x-i][y+i] == '0' && x-i >= 0 && y+i <= 14)
+        {
+            Pos tmp{x-i,y+i,0};
+            posSet.push_back(tmp);
+            chess[x-i][y+i] = '3';
+        }
+        if(chess[x+i][y-i] == '0' && x+i <= 14 && y-i >= 0)
+        {
+            Pos tmp2{x+i,y-i,0};
+            posSet.push_back(tmp2);
+            chess[x+i][y-i] = '3';
+        }
     }
 
     //反斜线
-    beginX = x - degr;
-    beginY = y + degr;    //起始的坐标
-    for(int i = 0;i <= 2 * degr; ++i)
+    for(int i = 1;i <= degree; ++i)
     {
-        if(beginX >= 0 || beginY >= 0 || beginX <= 14 || beginY <= 14)
+        if(chess[x-i][y-i] == '0' && x-i >= 0 && y-i >= 0)
         {
-            if(chess[beginX][beginY] == '0')
-            {
-                chess[beginX][beginY] = '3';
-                Pos tmp = {beginX,beginY,0};
-                posSet.push_back(tmp);
-            }
+            Pos tmp{x-i,y-i,0};
+            posSet.push_back(tmp);
+            chess[x-i][y-i] = '3';
         }
-        ++beginX;   //不管怎样每次循环位置都要变
-        --beginY;
+        if(chess[x+i][y+i] == '0' && x+i <= 14 && y+i <= 14)
+        {
+            Pos tmp2{x+i,y+i,0};
+            posSet.push_back(tmp2);
+            chess[x+i][y+i] = '3';
+        }
     }
 }
 
@@ -130,290 +147,267 @@ void AutoBrain::clearThree()
     }
 }
 
-inline int AutoBrain::matchWeight(int weight[4][3], int num, int i, int j)
-{
-    if(chess[i][j] == '0')//x220
-    {
-        if((j - num - 1) >= 0)
-        {
-            if(chess[i][j - num - 1] == '0')//0220
-            {
-                return weight[num - 1][0];
-            }
-            else//1220
-            {
-                return weight[num - 1][1];
-            }
-        }
-        else
-            return weight[num - 1][1];  //到边界上相当于有一个棋子
-    }
-    else//x221
-    {
-        if((j - num - 1) >= 0)
-        {
-            if(chess[i][j - num - 1] == '0')//0221
-            {
-                return weight[num - 1][1];
-            }
-            else//1221
-            {
-                return weight[num - 1][2];
-            }
-        }
-        else
-            return weight[num - 1][2];
-    }
-}
-inline int AutoBrain::matchWeight2(int weight[4][3], int num, int i, int j)
-{
-    if(chess[i][j] == '0')//x220
-    {
-        if((i - num - 1) >= 0)
-        {
-            if(chess[i-num-1][j] == '0')//0220
-            {
-                return weight[num - 1][0];
-            }
-            else//1220
-            {
-                return weight[num - 1][1];
-            }
-        }
-        else
-            return weight[num - 1][1];  //到边界上相当于有一个棋子
-    }
-    else//x221
-    {
-        if((i - num - 1) >= 0)
-        {
-            if(chess[i-num-1][j] == '0')//0221
-            {
-                return weight[num - 1][1];
-            }
-            else//1221
-            {
-                return weight[num - 1][2];
-            }
-        }
-        else
-            return weight[num - 1][2];
-    }
-}
-void AutoBrain::checkPattern(std::stack<char> &pat, int i, int &j, int &score1, int &score2, int weight[4][3])
-{
-    if(pat.empty())
-        pat.push(chess[i][j]);
-    else
-    {
-        if(pat.top() == chess[i][j])
-        {
-            pat.push(chess[i][j]);
-            if(j == 14)
-            {
-                if(pat.top() == '2')    //连续的是2
-                {
-                    score2 += weight[pat.size()][1];
-                    while(!pat.empty()) pat.pop();
-                }
-                else if(pat.top() == '1')//连续的是1
-                {
-                    score1 += weight[pat.size()][1];
-                    while(!pat.empty()) pat.pop();
-                }
-            }
-        }
-        else
-        {
-            if(pat.top() == '2')    //连续的是2
-            {
-                score2 += matchWeight(weight,pat.size(),i,j);
-                while(!pat.empty()) pat.pop();
-            }
-            else if(pat.top() == '1')//连续的是1
-            {
-                score1 += matchWeight(weight,pat.size(),i,j);
-                while(!pat.empty()) pat.pop();
-            }
-            j--;
-            while(!pat.empty())pat.pop();
-        }
-    }
-}
-
 //评估此时的棋盘分数，并写入链表
 void AutoBrain::setValue()
 {
-    //遍历链表中的每一个节点，按照节点的坐标给程序赋值‘2’
-    //计算此时的局面分数，并写入链表
-    //计算方法：遍历棋盘的每一条线，寻找宏中描绘的情况，敌人的是负值，我方是正值
-    //把我方的值相加与敌人的相减，把得到的值复制给结构体
-    //如何遍历：对于任意一条线，如果值相等就累加计数器，直到不相等，并判断计数器停止的
-    //位置的值是棋子还是空的由此进行赋值
-    int weight[4][3] = {ONE0,ONE1,ONE2,TWO0,TWO1,TWO2,THREE0,THREE1,THREE2,FOUR0,FOUR1,FOUR2};
-
-    for(auto &tmp : this->posSet)
+    //遍历链表中的每一个节点，假定电脑走到了这里
+    for(auto &tmp : posSet)
     {
-        chess[tmp.x_axis][tmp.y_axis] = '2';//假定下这里
-        int score1 = 0, score2 = 0; //初始的棋盘分数
-        std::stack<char> pat;
-
-        //横线,可以正确的计算出来,不好写成函数
-        for(int i = 0;i < 15; ++i)  //横线的个数
-        {
-            for(int j = 0;j < 15; ++j)//横线上的点
-            {
-                checkPattern(pat,i,j,score1,score2,weight);
-            }
-        }
-
+        chess[tmp.x_axis][tmp.y_axis] = '2';    //假设电脑走到这里
+        //横线
+        tmp.value += horizontalLine();
         //竖线
-        while(!pat.empty())pat.pop();
-        for(int j = 0;j < 15; ++j)
-        {
-            for(int i = 0;i < 15; ++i)
-            {
-                if(pat.empty())
-                    pat.push(chess[i][j]);
-                else
-                {
-                    if(pat.top() == chess[i][j])
-                    {
-                        pat.push(chess[i][j]);
-                        if(i == 14)
-                        {
-                            if(pat.top() == '2')    //连续的是2
-                            {
-                                score2 += weight[pat.size()][1];
-                                while(!pat.empty()) pat.pop();
-                            }
-                            else if(pat.top() == '1')//连续的是1
-                            {
-                                score1 += weight[pat.size()][1];
-                                while(!pat.empty()) pat.pop();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(pat.top() == '2')    //连续的是2
-                        {
-                            score2 += matchWeight2(weight,pat.size(),i,j);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        else if(pat.top() == '1')//连续的是1
-                        {
-                            score1 += matchWeight2(weight,pat.size(),i,j);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        i--;
-                        while(!pat.empty())pat.pop();
-                    }
-                }
-            }
-        }
-
+        tmp.value += verticalLine();
         //斜线
-        while(!pat.empty())pat.pop();
-        int x = 0,y = 0;
-        int start = 0,end = 4;
-        for(int i = 0;i < 21; ++i)
-        {
-            x = start;y = end;
-            while(start != y)
-            {
-                if(pat.empty())
-                    pat.push(chess[x][y]);
-                else
-                {
-                    if(pat.top() == chess[x][y])
-                    {
-                        pat.push(chess[x][y]);//没有对边界进行判断
-                    }
-                    else
-                    {
-                        if(pat.top() == '2')    //连续的是2
-                        {
-                            score2 += matchWeight(weight,pat.size(),x,y);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        else if(pat.top() == '1')//连续的是1
-                        {
-                            score1 += matchWeight(weight,pat.size(),x,y);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        y++;x--;
-                        while(!pat.empty())pat.pop();
-                    }
-                }
-
-                x++;
-                y--;
-            }
-            if(end < 14)
-                end++;
-            else
-                start++;
-        }
-
+        tmp.value += slantedLine();
         //反斜线
-        while(!pat.empty())pat.pop();
-        start = 10;end = 0;
-        for(int i = 0;i < 21; ++i)
-        {
-            x = start;y = end;
-            while((start + y) != 14)
-            {
-                if(pat.empty())
-                    pat.push(chess[x][y]);
-                else
-                {
-                    if(pat.top() == chess[x][y])
-                    {
-                        pat.push(chess[x][y]);//没有对边界进行判断
-                    }
-                    else
-                    {
-                        if(pat.top() == '2')    //连续的是2
-                        {
-                            score2 += matchWeight(weight,pat.size(),x,y);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        else if(pat.top() == '1')//连续的是1
-                        {
-                            score1 += matchWeight(weight,pat.size(),x,y);
-                            while(!pat.empty()) pat.pop();
-                        }
-                        y--;x--;
-                        while(!pat.empty())pat.pop();
-                    }
-                }
-
-                x++;
-                y++;
-            }
-            if(start > 0)
-                start--;
-            else
-                end++;
-        }
-
-        chess[tmp.x_axis][tmp.y_axis] = '0';//取消假定
-//        std::cout << score1 << "dd" << score2 << std::endl;
-        tmp.value = (score2 - score1);
+        tmp.value += anticlinalLine();
+        chess[tmp.x_axis][tmp.y_axis] = '0';    //将棋盘恢复
     }
 }
 
-//根据难度来去除一些位置
-void AutoBrain::reducePos()
+//反斜线
+int AutoBrain::anticlinalLine()
 {
-    //暂时没有办法应对，下的很远的棋子，那需要在高难度中多部预测
-    //简单的情况下，不进行预测步骤，没必要进行剪枝
+    std::deque<char> pattern;
+    int score_1 = 0, score_2 = 0;
+    int start = 10, end = 0;     // 4 - 15， 0 - 11
+
+    for(int i = 0;i < 21; ++i)
+    {
+        int x = start, y = end;
+        while((start + y) != 14)
+        {
+            if(x == start)
+            {
+                pattern.push_back(chess[x][y]);
+                ++x; ++y;
+                continue;
+            }
+
+            if(chess[x][y] == *pattern.rbegin())
+                pattern.push_back(chess[x][y]);
+            else    //不相等，判断队列中的值，弹出值，剩一个
+            {
+                switch(*pattern.rbegin())
+                {
+                case '0':
+                    while(pattern.size() > 1)   //弹出值只剩一个
+                        pattern.pop_front();
+                    pattern.push_back(chess[x][y]);
+                    break;
+                case '1':
+                    setScore(score_1, x, y, pattern);
+                    break;
+                case '2':
+                    setScore(score_2, x, y, pattern);
+                    break;
+                }
+            }//if chess[x][y] == *pattern.rbegin()
+
+            ++x; ++y;
+        }//while
+
+        if(start > 0)
+            --start;
+        else
+            ++end;
+    }//for i < 21
+
+    return score_2 - score_1;
 }
 
+//横线
+int AutoBrain::horizontalLine()
+{
+    std::deque<char> pattern; //用来寻找五子棋组成的模式
+    int score_1 = 0, score_2 = 0;
+    for(int i = 0;i < 15; ++i)//15条线
+    {
+        for(int j = 0;j < 15; ++j)//每条线上15个点
+        {
+            //第一个入队列
+            if(j == 0)
+            {
+                pattern.push_back(chess[i][j]);
+                continue;
+            }
+
+            //相等入队
+            if(chess[i][j] == *pattern.rbegin())
+                pattern.push_back(chess[i][j]);
+            else    //不相等，判断队列中的值，弹出值，剩一个
+            {
+                switch(*pattern.rbegin())
+                {
+                case '0':
+                    while(pattern.size() > 1)   //弹出值只剩一个
+                        pattern.pop_front();
+                    pattern.push_back(chess[i][j]);
+                    break;
+                case '1':
+                    setScore(score_1, i, j, pattern);
+                    break;
+                case '2':
+                    setScore(score_2, i, j, pattern);
+                    break;
+                }
+            }//if j == *pattern.rbegin()
+        }//for j < 15
+    }//for i < 15
+    return score_2 - score_1;
+}
+
+//斜线
+int AutoBrain::slantedLine()
+{
+    std::deque<char> pattern;
+    int score_1 = 0, score_2 = 0;
+    int start = 4, end = 0;     // 4 - 15， 0 - 11
+
+    for(int i = 0;i < 21; ++i)
+    {
+        int y = start, x = end;
+        while(y != end)
+        {
+            if(y == start)
+            {
+                pattern.push_back(chess[x][y]);
+                ++x; --y;
+                continue;
+            }
+
+            if(chess[x][y] == *pattern.rbegin())
+                pattern.push_back(chess[x][y]);
+            else    //不相等，判断队列中的值，弹出值，剩一个
+            {
+                switch(*pattern.rbegin())
+                {
+                case '0':
+                    while(pattern.size() > 1)   //弹出值只剩一个
+                        pattern.pop_front();
+                    pattern.push_back(chess[x][y]);
+                    break;
+                case '1':
+                    setScore(score_1, x, y, pattern);
+                    break;
+                case '2':
+                    setScore(score_2, x, y, pattern);
+                    break;
+                }
+            }//if chess[x][y] == *pattern.rbegin()
+
+            ++x; --y;
+        }//while
+
+        if(start < 14)
+            ++start;
+        else
+            ++end;
+    }//for i < 21
+
+    return score_2 - score_1;
+}
+
+//竖线
+int AutoBrain::verticalLine()
+{
+    std::deque<char> pattern; //用来寻找五子棋组成的模式
+    int score_1 = 0, score_2 = 0;
+    for(int i = 0;i < 15; ++i)//15条线
+    {
+        for(int j = 0;j < 15; ++j)//每条线上15个点
+        {
+            //第一个入队列
+            if(j == 0)
+            {
+                pattern.push_back(chess[j][i]);
+                continue;
+            }
+
+            //相等入队
+            if(chess[j][i] == *pattern.rbegin())
+                pattern.push_back(chess[j][i]);
+            else    //不相等，判断队列中的值，弹出值，剩一个
+            {
+                switch(*pattern.rbegin())
+                {
+                case '0':
+                    while(pattern.size() > 1)   //弹出值只剩一个
+                        pattern.pop_front();
+                    pattern.push_back(chess[j][i]);
+                    break;
+                case '1':
+                    setScore(score_1, j, i, pattern);
+                    break;
+                case '2':
+                    setScore(score_2, j, i, pattern);
+                    break;
+                }
+            }//if j == *pattern.rbegin()
+        }//for j < 15
+    }//for i < 15
+    return score_2 - score_1;
+}
+
+void AutoBrain::setScore(int &score, int j, int i, std::deque<char> &pattern)
+{
+    if(chess[j][i] == '1')
+    {
+        if(*pattern.begin() == '0')
+            score += switchScore(pattern.size()-1, '1');
+        else
+            score += switchScore(pattern.size()-1, '2');
+    }
+    else if(chess[j][i] == '0')
+    {
+        if(*pattern.begin() == '0')
+            score += switchScore(pattern.size()-1, '0');
+        else
+            score += switchScore(pattern.size()-1, '1');
+    }
+    while(pattern.size() > 1)
+        pattern.pop_front();
+}
+
+int AutoBrain::switchScore(int num, char flag)
+{
+    if(num <= 1)
+        return 0;
+
+    switch (num) {
+    case 2:
+        switch (flag){
+        case '0':
+            return TWO0;
+        case '1':
+            return TWO1;
+        case '2':
+            return TWO2;
+        }
+    case 3:
+        switch (flag){
+        case '0':
+            return THREE0;
+        case '1':
+            return THREE1;
+        case '2':
+            return THREE2;
+        }
+    case 4:
+        switch (flag){
+        case '0':
+            return FOUR0;
+        case '1':
+            return FOUR1;
+        case '2':
+            return FOUR2;
+        }
+    }
+}
 //根据难度来进行深层次的预测运算，就是多想几步
-void AutoBrain::computeDepth()
-{
+//void AutoBrain::computeDepth()
+//{
 
-}
+//}
 

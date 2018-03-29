@@ -4,25 +4,49 @@ using namespace std;
 
 int main()
 {
-    AutoBrain test;
+    //初始化棋盘到一定的局面
+    AutoBrain auCom;
 
+    auCom.setDegree(1);
 
-//    test.setDegree('9');  //可以根据难度准确的计算出可以走的位置
-//    test.setChess(0,3,'1');
+    auCom.chess[6][6] = '2';    //假定人先走
+    auCom.chess[9][7] = '1';
+    auCom.chess[6][7] = '2';
+    auCom.chess[7][6] = '1';
+    auCom.chess[8][7] = '1';    //人走过了，开始电脑计算了
 
-      test.chess[6][5] = '1';
-      test.chess[4][4] = '2';
-      int x = 6,y = 6;
-//    Pos step;
-//    step.x_axis = 0;
-//    step.y_axis = 6;
-//    test.posSet.push_back(step);
-//    test.setValue();
-    test.autoMove(x, y);
-//    test.printList();
-    cout << x << ":" << y << endl;
+    //计算可以移动的位置
+    auCom.canMovePos();
 
-    cout << "Hello World!" << endl;
+    //计算分数
+    auCom.setValue();
+
+    //输出链表测试结果是否正确
+    for(auto tmp : auCom.posSet)
+    {
+        cout << tmp.x_axis << " : " << tmp.y_axis << " := " << tmp.value << endl;
+    }
+
+    cout << "输出棋盘： \n";     //终端存在乱码
+    for(int i = 0;i < 15;++i)
+    {
+        for(int j = 0;j < 15;++j)
+        {
+            cout << auCom.chess[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    //输出最大值的节点
+    cout << "max max ^^^^^......." << endl;
+    Pos max;
+    for(auto tmp : auCom.posSet)
+    {
+        if(tmp.value > max.value)
+            max = tmp;
+    }
+    cout << max.x_axis << ":" << max.y_axis << ":" << max.value << endl;
+
     return 0;
 }
 
