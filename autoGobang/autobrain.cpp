@@ -1,5 +1,8 @@
 #include "autobrain.h"
 #include <algorithm>
+#include <cmath>
+#include <random>
+#include <ctime>
 
 AutoBrain::AutoBrain() : degree(1)//难度初始化为1
 {
@@ -26,17 +29,40 @@ void AutoBrain::autoMove(int &x, int &y)
     canMovePos();       //所有电脑可以走的位置
     setValue();         //计算电脑可以走的位置的权值
 
-    Pos max = *posSet.begin();  //寻找权值最大的节点
-    for(auto tmp : posSet)
-    {
-        if(tmp.value > max.value)
-            max = tmp;
-    }
-
-    x = max.x_axis;     //设置电脑走的位置
-    y = max.y_axis;
-
+    getBestPos(x, y);   //计算出最佳的位置，并返回
     chess[x][y] = '2';
+}
+
+//sort函数内部提示没有匹配减号，可能是因为全局的sort没有对list迭代器进行重载-
+//bool sort_comp(std::list<Pos>::iterator x, std::list<Pos>::iterator y)
+//{
+//    return x->value < y->value;
+//}
+
+void AutoBrain::getBestPos(int &x, int &y)
+{
+    posSet.sort();
+
+    //在所有相等的位置随机产生一个
+//    auto p_equal_num = posSet.begin();
+//    for(auto tmp = ++posSet.begin(); tmp != posSet.end(); ++tmp)
+//    {
+//        if((*p_equal_num).value == (*tmp).value)
+//            p_equal_num++;
+//        else break;
+//    }
+
+//    srand(time(NULL));
+//    int ptr_len = 0;
+//    if((ptr_len = distance(posSet.begin(), p_equal_num)) <= 0)
+//        x = (*p_equal_num).x_axis, y = (*p_equal_num).y_axis;
+//    else
+//        ptr_len = rand() % (ptr_len - 1);
+
+    auto p_equal_num = posSet.begin();
+//    std::advance(p_equal_num, ptr_len);
+    x = p_equal_num->x_axis;
+    y = p_equal_num->y_axis;
 }
 
 //参考的算法
@@ -169,15 +195,16 @@ void AutoBrain::setValue()
 //反斜线
 int AutoBrain::anticlinalLine()
 {
-    std::deque<char> pattern;
-    int score_1 = 0, score_2 = 0;
-    int start = 10, end = 0;     // 4 - 15， 0 - 11
+    std::deque<char> pattern; //用来寻找五子棋组成的模式
+    int score_1 = 0, score_2 = 0;//棋子1的分数，棋子2的分数
+    int start = 10, end = 0;     // 4 - 15， 0 - 11，每条线的开始的坐标
 
     for(int i = 0;i < 21; ++i)
     {
-        int x = start, y = end;
+        int x = start, y = end; //线上的点的坐标
         while((start + y) != 14)
         {
+            //将第一个入队
             if(x == start)
             {
                 pattern.push_back(chess[x][y]);
@@ -185,33 +212,25 @@ int AutoBrain::anticlinalLine()
                 continue;
             }
 
+            //相等就入队，不相等就判断队列中的是什么模式
             if(chess[x][y] == *pattern.rbegin())
                 pattern.push_back(chess[x][y]);
-            else    //不相等，判断队列中的值，弹出值，剩一个
+            else
             {
-                switch(*pattern.rbegin())
-                {
-                case '0':
-                    while(pattern.size() > 1)   //弹出值只剩一个
-                        pattern.pop_front();
-                    pattern.push_back(chess[x][y]);
-                    break;
-                case '1':
-                    setScore(score_1, x, y, pattern);
-                    break;
-                case '2':
-                    setScore(score_2, x, y, pattern);
-                    break;
-                }
+                switchPattern(score_1, score_2, x, y, pattern);
             }//if chess[x][y] == *pattern.rbegin()
 
+            //换点
             ++x; ++y;
         }//while
 
+        //换线
         if(start > 0)
             --start;
         else
             ++end;
+        switchPattern(score_1, score_2, x, y, pattern);
+        pattern.clear();
     }//for i < 21
 
     return score_2 - score_1;
@@ -220,41 +239,32 @@ int AutoBrain::anticlinalLine()
 //横线
 int AutoBrain::horizontalLine()
 {
-    std::deque<char> pattern; //用来寻找五子棋组成的模式
+    std::deque<char> pattern;
     int score_1 = 0, score_2 = 0;
     for(int i = 0;i < 15; ++i)//15条线
     {
         for(int j = 0;j < 15; ++j)//每条线上15个点
         {
-            //第一个入队列
             if(j == 0)
             {
                 pattern.push_back(chess[i][j]);
                 continue;
             }
 
-            //相等入队
             if(chess[i][j] == *pattern.rbegin())
                 pattern.push_back(chess[i][j]);
-            else    //不相等，判断队列中的值，弹出值，剩一个
+            else
             {
-                switch(*pattern.rbegin())
-                {
-                case '0':
-                    while(pattern.size() > 1)   //弹出值只剩一个
-                        pattern.pop_front();
-                    pattern.push_back(chess[i][j]);
-                    break;
-                case '1':
-                    setScore(score_1, i, j, pattern);
-                    break;
-                case '2':
-                    setScore(score_2, i, j, pattern);
-                    break;
-                }
+                switchPattern(score_1, score_2, i, j, pattern);
             }//if j == *pattern.rbegin()
+
+            //最后一个的模式
+            if(j == 14)
+                switchPattern(score_1, score_2, i, j, pattern);
         }//for j < 15
+        pattern.clear();
     }//for i < 15
+
     return score_2 - score_1;
 }
 
@@ -263,7 +273,7 @@ int AutoBrain::slantedLine()
 {
     std::deque<char> pattern;
     int score_1 = 0, score_2 = 0;
-    int start = 4, end = 0;     // 4 - 15， 0 - 11
+    int start = 4, end = 0;
 
     for(int i = 0;i < 21; ++i)
     {
@@ -279,22 +289,9 @@ int AutoBrain::slantedLine()
 
             if(chess[x][y] == *pattern.rbegin())
                 pattern.push_back(chess[x][y]);
-            else    //不相等，判断队列中的值，弹出值，剩一个
+            else
             {
-                switch(*pattern.rbegin())
-                {
-                case '0':
-                    while(pattern.size() > 1)   //弹出值只剩一个
-                        pattern.pop_front();
-                    pattern.push_back(chess[x][y]);
-                    break;
-                case '1':
-                    setScore(score_1, x, y, pattern);
-                    break;
-                case '2':
-                    setScore(score_2, x, y, pattern);
-                    break;
-                }
+                switchPattern(score_1, score_2, x, y, pattern);
             }//if chess[x][y] == *pattern.rbegin()
 
             ++x; --y;
@@ -304,6 +301,8 @@ int AutoBrain::slantedLine()
             ++start;
         else
             ++end;
+        switchPattern(score_1, score_2, x, y, pattern);
+        pattern.clear();
     }//for i < 21
 
     return score_2 - score_1;
@@ -312,62 +311,84 @@ int AutoBrain::slantedLine()
 //竖线
 int AutoBrain::verticalLine()
 {
-    std::deque<char> pattern; //用来寻找五子棋组成的模式
+    std::deque<char> pattern;
     int score_1 = 0, score_2 = 0;
-    for(int i = 0;i < 15; ++i)//15条线
+    for(int i = 0;i < 15; ++i)
     {
-        for(int j = 0;j < 15; ++j)//每条线上15个点
+        for(int j = 0;j < 15; ++j)
         {
-            //第一个入队列
             if(j == 0)
             {
                 pattern.push_back(chess[j][i]);
                 continue;
             }
 
-            //相等入队
             if(chess[j][i] == *pattern.rbegin())
                 pattern.push_back(chess[j][i]);
-            else    //不相等，判断队列中的值，弹出值，剩一个
+            else
             {
-                switch(*pattern.rbegin())
-                {
-                case '0':
-                    while(pattern.size() > 1)   //弹出值只剩一个
-                        pattern.pop_front();
-                    pattern.push_back(chess[j][i]);
-                    break;
-                case '1':
-                    setScore(score_1, j, i, pattern);
-                    break;
-                case '2':
-                    setScore(score_2, j, i, pattern);
-                    break;
-                }
+                switchPattern(score_1, score_2, j, i, pattern);
             }//if j == *pattern.rbegin()
+
+            if(j == 14)
+                switchPattern(score_1, score_2, j, i, pattern);
         }//for j < 15
+        pattern.clear();
     }//for i < 15
     return score_2 - score_1;
 }
 
-void AutoBrain::setScore(int &score, int j, int i, std::deque<char> &pattern)
+void  AutoBrain::switchPattern(int &score_1, int &score_2, int x, int y, std::deque<char> &pattern)
 {
-    if(chess[j][i] == '1')
+    if(pattern.size() == 1)
+    {
+        pattern.push_back(chess[x][y]);
+        return; //不往下执行，直接开始下一个点
+    }
+
+    switch(*pattern.rbegin())
+    {
+    case '0':
+        while(pattern.size() > 1)   //弹出值只剩一个
+            pattern.pop_front();
+        pattern.push_back(chess[x][y]);
+        break;
+    case '1':
+        setScore(score_1, x, y, pattern);//设置分数，并且将已经计算过的分数弹出
+        break;
+    case '2':
+        setScore(score_2, x, y, pattern);
+        break;
+    }
+}
+
+void AutoBrain::setScore(int &score, int x, int y, std::deque<char> &pattern)
+{
+    if(chess[x][y] == '1')
     {
         if(*pattern.begin() == '0')
-            score += switchScore(pattern.size()-1, '1');
+            score += switchScore(pattern.size()-1, '1');//0x1
         else
-            score += switchScore(pattern.size()-1, '2');
+            score += switchScore(pattern.size()-1, '2');//yx1
     }
-    else if(chess[j][i] == '0')
+    else if(chess[x][y] == '0')
     {
         if(*pattern.begin() == '0')
-            score += switchScore(pattern.size()-1, '0');
+            score += switchScore(pattern.size()-1, '0');//0x0
         else
-            score += switchScore(pattern.size()-1, '1');
+            score += switchScore(pattern.size()-1, '1');//yx0
+    }//单独写成函数之后，就要判断三个值
+    else
+    {
+        if(*pattern.begin() == '0')
+            score += switchScore(pattern.size()-1, '1');//0x2
+        else
+            score += switchScore(pattern.size()-1, '2');//yx2
     }
-    while(pattern.size() > 1)
+
+    while(pattern.size() > 1)//弹出值只剩一个
         pattern.pop_front();
+    pattern.push_back(chess[x][y]); //将判断的那个添加进去
 }
 
 int AutoBrain::switchScore(int num, char flag)

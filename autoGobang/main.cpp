@@ -10,16 +10,14 @@ int main()
     auCom.setDegree(1);
 
     auCom.chess[6][6] = '2';    //假定人先走
-    auCom.chess[9][7] = '1';
     auCom.chess[6][7] = '2';
+    auCom.chess[7][7] = '1';
     auCom.chess[7][6] = '1';
-    auCom.chess[8][7] = '1';    //人走过了，开始电脑计算了
+//    auCom.chess[7][8] = '1';    //人走过了，开始电脑计算了
 
-    //计算可以移动的位置
-    auCom.canMovePos();
-
-    //计算分数
-    auCom.setValue();
+    int x = 7, y = 8;
+    auCom.autoMove(x, y);
+    cout << x << ":" << y << endl;
 
     //输出链表测试结果是否正确
     for(auto tmp : auCom.posSet)
@@ -38,14 +36,14 @@ int main()
     }
 
     //输出最大值的节点
-    cout << "max max ^^^^^......." << endl;
-    Pos max;
-    for(auto tmp : auCom.posSet)
-    {
-        if(tmp.value > max.value)
-            max = tmp;
-    }
-    cout << max.x_axis << ":" << max.y_axis << ":" << max.value << endl;
+//    cout << "max max ^^^^^......." << endl;
+//    Pos max;
+//    for(auto tmp : auCom.posSet)
+//    {
+//        if(tmp.value > max.value)
+//            max = tmp;
+//    }
+//    cout << max.x_axis << ":" << max.y_axis << ":" << max.value << endl;
 
     return 0;
 }
