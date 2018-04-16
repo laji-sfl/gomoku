@@ -2,7 +2,8 @@
  *	有关线程的函数，和线程调用到的函数
  */
 
-#include "threadFun.h"
+#include "threadFun.h"	//此文件的函数声明
+#include "accessMysql.h"//数据库操作的头文件
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -13,7 +14,7 @@
 #include <errno.h>
 
 /*	TODO:
- * 	下一个版本的服务器，将程序改为守护进程，将printf改为日志系统，将读写文件改为读写数据库
+ * 	下一个版本的服务器，将程序改为守护进程，将printf改为日志系统
  * 	将线程改为线程池，把线程的锁搞清楚（我还不知道我这个版本的锁到底有没有用）
  * 	面对tcp的连接的异常情况要考虑进去，将网络原理搞明白
  * 	添加加密的模块将通信的数据进行加密处理
@@ -171,22 +172,30 @@ void transmit(int fd, char *msg)
 //根据宏来区分的不同功能函数
 void login(int fd, char* msg)
 {
-//	printf("\n ** %s ** \n", msg);
-	/*打开文件，查询是否有注册*/
-	char buf[36] = {0};						// 16 + 1 + 16 + 1 < 36
-	int yesOrNo = 0;
-	pthread_rwlock_rdlock(&rwlock);			//加读锁
-	FILE *file = fopen("./namePwd", "r");	//只读打开
-	while(fgets(buf, 36, file)) {
-		if((yesOrNo = isExist(buf, msg)))	//返回1表示存在，
-			break;
-	}										//TODO：该为连接数据库直接查询效率会高
-	fclose(file);
-	pthread_rwlock_unlock(&rwlock);			//解开锁
+	/*查询数据库是否允许登录*/
+	char nameBuf[17] = {0};
+	size_t i = 0;
+	char pwdBuf[17] = {0}, *p = pwdBuf;
+	char *img_dir = NULL;	//图片的目录
+
+	//将name和pwd读取出来
+	for(i = 1;msg[i] != ':'; ++i) {
+		nameBuf[i-1] = msg[i];
+	}
+	for(i = i+1;msg[i] != '&'; ++i) {
+		*p++ = msg[i];
+	}
+
+	char yesOrNo = isRegister(nameBuf, pwdBuf, &img_dir);
+
+	/*TODO:暂时不读取图片也不将图片发送给客户端*/
+	printf("name:%s,img:%s\n", nameBuf, img_dir);
+	free(img_dir);	//释放图片路径的资源
+
 	/*返回判断结果*/
-	if(yesOrNo)
+	if(yesOrNo == '0')		//可以登录
 		write(fd, "11", 2);
-	else
+	else					//不可以
 		write(fd, "10", 2);
 	/*断开连接*/
 	close(fd);
@@ -314,3 +323,53 @@ void changeRival(int fd, char* msg)
 				//一局结束之后等待30秒，如果不重新匹配就不管他，直接再一次开始游戏
 				//否则断开连接或者重新匹配
 //}
+
+void updateMsg(int fd, char *msg)
+{
+    //更新密码
+    char nameBuf[17] = {0};
+    size_t i = 0;
+    char pwdBuf[17] = {0}, *p = pwdBuf;
+    char yesOrNo = '1';
+
+    //将name和pwd读取出来
+    for(i = 1;msg[i] != ':'; ++i) {
+        nameBuf[i-1] = msg[i];
+    }
+    for(i = i+1;msg[i] != '&'; ++i) {
+        *p++ = msg[i];
+    }
+
+    //更新
+    yesOrNo = updateUserMsg(nameBuf, pwdBuf, NULL);
+
+    if(yesOrNo == '1')
+        write(fd, "A1", 2);
+    else
+        write(fd, "A0", 2);
+}
+
+void updateImg(int fd, char *msg)
+{
+    char imgBuf[1024] = {0};    //存储图片
+    char imgPwd[50] = {0};        //图片信息
+    char yesOrNo = '1';
+    int file_fd, n = 0;
+
+    //读取
+    //问题，一个线程处理一个文件描述符，处理结束后线程退出，文件描述符
+    sprintf(imgPwd, "/home/sfl/download/%s",msg);
+    file_fd = open(imgPwd, O_CREAT | O_RDWR | O_TRUNC, 0644);
+    while((n = read(fd, imgBuf, 1024)) > 0) {
+        write(file_fd, imgBuf, n);
+    }
+    close(file_fd);
+
+    //更新
+    yesOrNo = updateUserMsg(msg+1, NULL, imgPwd);
+
+    if(yesOrNo == '1')
+        write(fd, "A1", 2);
+    else
+        write(fd, "A0", 2);
+}

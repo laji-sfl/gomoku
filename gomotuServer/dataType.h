@@ -4,9 +4,17 @@
 #ifndef _DATATYPE_H_
 #define _DATATYPE_H_
 
+/*
+ * 	需要客户端增加修改头像的功能，然后将头像的图片发来，（可以学习一下操作图片的库，比如压缩图片）
+ * 	服务器在登录时，如果已经注册就查询出头像图片发给客户端，没注册就注册，然后给一个默认的图片
+ * 	接到修改头像的指令，就把图片存起来，然后在更新数据库信息
+ */
+
 #include "list.h"		//链表的函数与结构的声明
 
 #define NAMELEN 16		//玩家名字的最大长度
+						//玩家的名字和密码的最大长度都是16
+						//接收玩家的昵称和密码的数据格式是：(一位标志)name:pwd&   例如：1name:pwd&
 
 #define LOGIN		'1'	//登录，登录时发起连接，连接之后发送登录验证字段
 	/*
@@ -54,6 +62,16 @@
 	 *server返回的数据格式：不返回
 	 *server接收的数据格式：9，name
 	*/
+#define 	UPDATEMSG	'A'	//修改密码
+	/*
+	 *	server返回的数据格式：'0'成功，’1‘失败
+	 *	server接收的数据格式：Aname:pwd&
+	 */
+#define		UPDATEIMG 	'B'	//上传图片
+	/*
+	 * 	server返回数据：‘0’成功，‘1’失败
+     * 	server接收数据：'B'name 图片
+	 */
 
 //等待匹配的链表的结点
 struct waitMatch {

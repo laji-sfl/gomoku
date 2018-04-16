@@ -30,6 +30,8 @@ void talk(int fd, char* msg);
 void changeRival(int fd, char* msg);
 void timeOut(int fd, char* msg);
 void closeClie(int fd, char* msg);
+void updateMsg(int fd, char *msg);
+void updateImg(int fd, char *msg);
 
 //辅助函数
 int isExist(char *buf, char *msg);
