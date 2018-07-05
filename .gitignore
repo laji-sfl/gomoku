@@ -1,3 +1,5 @@
 *~
 build-*/*
 *.o
+./gomotuServer/encryption/pri_key_str
+./gomotuServer/encryption/pub_key_str
