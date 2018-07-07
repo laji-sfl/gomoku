@@ -4,20 +4,20 @@
 
 #include "threadPoll.h"
 
-char initThreadPoll(int threadNum, struct ThPoll *thPoll)
+char initThreadPoll(int threadNum, struct ThPoll **thPoll)
 {
     pthread_t tid;  //线程号
     pthread_attr_t tattr;//线程属性
     int i = 0;//循环变量
 
     //初始化线程池结构体
-    thPoll = (struct ThPoll *)malloc(sizeof(struct thPoll));
-    thPoll->head = (struct TaskNote *)malloc(sizeof(struct TaskNote));
-    thPoll->head->fd = -1;
-    thPoll->head->next = NULL;
-    thPoll->isEnd = '1';
-    pthread_mutex_init(&thPoll->thmutext, NULL);//初始化锁和条件变量
-    pthread_attr_init(&thPoll->thcond);
+    *thPoll = (struct ThPoll *)malloc(sizeof(struct ThPoll));
+    (*thPoll)->head = (struct TaskNote *)malloc(sizeof(struct TaskNote));//*的优先级低于->和.
+    (*thPoll)->head->fd = -1;
+    (*thPoll)->head->next = NULL;
+    (*thPoll)->isEnd = '1';
+    pthread_mutex_init(&(*thPoll)->thmutext, NULL);//初始化锁和条件变量
+    pthread_cond_init(&(*thPoll)->thcond, NULL);
 
     //设置线程为detach
     pthread_attr_init(&tattr);
@@ -25,8 +25,10 @@ char initThreadPoll(int threadNum, struct ThPoll *thPoll)
 
     //创建threadNum个线程
     for(i = 0;i < threadNum; ++i) {
-        pthread_create(&tid, &tattr, threadFun, thPoll);
+        pthread_create(&tid, &tattr, threadFun, *thPoll);
+		printf("threadNum%d: %u , ", i, (unsigned int)tid);
     }
+	printf("\n");
 
     //销毁不用的资源
     pthread_attr_destroy(&tattr);
@@ -38,7 +40,7 @@ char addTaskToList(int fd, struct ThPoll *thPoll)
     if(thPoll->isEnd == '0') {
         printf("线程已被销毁\n");
 		set_log("thread poll addTaskToList 线程池已被销毁");
-        return;
+        return '1';
     }
 
     //创建一个任务节点加入链表
@@ -52,7 +54,9 @@ char addTaskToList(int fd, struct ThPoll *thPoll)
     pthread_mutex_unlock(&thPoll->thmutext);
 
     //唤醒一个线程
+	printf("加入任务链表，唤醒一个线程\n");
     pthread_cond_signal(&thPoll->thcond);
+	return '0';
 }
 
 void *threadFun(void *arg)
@@ -85,6 +89,7 @@ void *threadFun(void *arg)
         pthread_mutex_unlock(&thpoll->thmutext);
 
         //执行任务
+		printf("开始执行任务:%u \n", (unsigned int)pthread_self());
         if(current != NULL);
             /*TODO:运行任务处理函数*/
 
@@ -92,6 +97,7 @@ void *threadFun(void *arg)
     }
 
     //退出线程
+	printf("线程退出\n");
     pthread_exit(NULL);
 }
 

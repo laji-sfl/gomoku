@@ -73,6 +73,38 @@ void set_log(char *str)
     close(fd);
 }
 
+void newThreadToAddEpoll(struct thArg *sockfd)
+{
+	pthread_t tid;
+	pthread_create(&tid, NULL, threadFunAccept, sockfd);
+	pthread_detach(tid);
+}
+
+void *threadFunAccept(void *arg)
+{
+	struct thArg *sockfd = (struct thArg *)arg;
+	int confd = 0;
+	struct sockaddr_in clieaddr;
+	int clielen = 0;
+	
+	while(1) {
+		if((confd = accept(sockfd->fd, (struct sockaddr *)&clieaddr, &clielen)) == -1) {
+			if(errno == EAGAIN || errno == EWOULDBLOCK) {
+				printf("accept EAGAIN\n");
+				break;
+			} else {
+				printf("error accept\n");
+				set_log("newThreadAddToEpoll accept error");
+				break;
+			}
+		}
+		printf("将fd：%d加入监听\n", confd);
+		epollAddFd(sockfd->epollfd, confd);//加入epoll监听
+	}
+
+	free(sockfd);
+}
+
 //void epollModFd(int fd)
 //{
 

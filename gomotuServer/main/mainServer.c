@@ -1,6 +1,5 @@
 #include "mainAidFun.h"
-#include "../thread/threadPoll.h"	//线程池
-#include <stdlib.h>
+#include "threadPoll.h"	//线程池
 
 #define EVENTNUM    20  //epoll_wait返回的事件数组的元素个数，也是最大的个数
 
@@ -34,8 +33,8 @@ int main(int argc, char *argv[])
     event_ptr = (struct epoll_event *)malloc(sizeof(struct epoll_event) * EVENTNUM);
 
 	//创建并初始化线程池
-	struct ThPoll *thpoll;
-	if ( '1' == initThreadPoll(5, thpoll)) {	//暂时默认5个线程
+	struct ThPoll *thpoll = NULL;
+	if ( '1' == initThreadPoll(5, &thpoll)) {	//暂时默认5个线程
 		set_log("初始化线程池失败");
 	}
 
@@ -55,17 +54,21 @@ int main(int argc, char *argv[])
 
             //服务器套接字响应，表示有新的连接
             if(sockfd == event_ptr[i].data.fd) {
-                addTaskToList(sockfd, thpoll);		//添加到线程池的任务链表中
-
+				struct thArg *arg = (struct thArg *)malloc(sizeof(struct thArg));//线程参数
+				arg->epollfd = epollFd;
+				arg->fd = sockfd;
+				newThreadToAddEpoll(arg);//创建一个新的线程将新连接的客户fd加入epoll的监听
 				//test
-				printf("new connect!!\n");
+				//printf("new connect!!\n");
             }
             //其他的与客户端通信的套接字
             else {
-                addTaskToList(event_ptr[i].data.fd, thpoll);//添加到线程池的任务链表中
+                if('1' == addTaskToList(event_ptr[i].data.fd, thpoll)) { //添加到线程池的任务链表中
+					set_log("mainServer addTaskToList失败");
+				}
 
 				//test
-				printf("recv msg!!\n");
+				//printf("recv msg!!\n");
             }
         }
     }
