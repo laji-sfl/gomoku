@@ -6,11 +6,11 @@
 void readPubKey(char *str, char **pubkey)
 {
     int fd = 0;
-    char *pubstr = (char *)malloc(KEY_LEN / 2);
+    char *pubstr = (char *)malloc(KEY_LEN);
     *pubkey = pubstr;
 
-    fd = open(str, O_RDWR);
-    read(fd, pubstr, KEY_LEN / 2);
+    fd = open(str, O_RDONLY);
+    read(fd, pubstr, KEY_LEN);
     close(fd);
 }
 
@@ -20,7 +20,7 @@ void readPriKey(char *str, char **prikey)
     char *pristr = (char *)malloc(KEY_LEN);
     *prikey = pristr;
 
-    fd = open(str, O_RDWR);
+    fd = open(str, O_RDONLY);
     read(fd, pristr, KEY_LEN);
     close(fd);
 }

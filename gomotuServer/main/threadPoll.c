@@ -58,7 +58,7 @@ char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll)
     pthread_mutex_unlock(&thPoll->thmutext);
 
     //唤醒一个线程
-	printf("加入任务链表，唤醒一个线程\n");
+	printf("加入任务链表，唤醒一个线程:addTaskToList\n");
     pthread_cond_signal(&thPoll->thcond);
 	return '0';
 }
@@ -93,7 +93,7 @@ void *threadFun(void *arg)
         pthread_mutex_unlock(&thpoll->thmutext);
 
         //执行任务
-		printf("开始执行任务:%u \n", (unsigned int)pthread_self());
+		printf("开始执行任务thread id:%u \n", (unsigned int)pthread_self());
         if(current != NULL)
             /*运行任务处理函数*/
 			threadCall(current);

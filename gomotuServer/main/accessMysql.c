@@ -14,14 +14,14 @@ char isRegister(char *name, char *pwd, char **img_dir)
     if(name == NULL || pwd == NULL || img_dir == NULL)
         return '1';
     //防止sql的注入攻击（只知道这个。。。）
-    if('0' != isLegal(name)) {
-        return '1';
-    }
+//    if('0' != isLegal(name)) {
+//        return '1';
+//    }
 
     MYSQL mysql;
     MYSQL_RES *res = NULL;  //返回的结果集的指针
     MYSQL_ROW row = NULL;   //每一行的行结果集
-    char *cmd = (char*)malloc(100);    // 100个字节应该够了,由调用者释放
+    char *cmd = (char*)malloc(150);    // 100个字节应该够了,由调用者释放
     int rowNum = 0; // fieldNum = 0;//记录行数和列数
 
     //初始化MySQL对象
@@ -105,13 +105,13 @@ char saveNameToMysql(char *name, char *pwd, char *img_dir)
 {
     if(name == NULL || pwd == NULL || img_dir == NULL)
         return '1';
-    if('0' != isLegal(name)) {
-        return '1';
-    }
+//    if('0' != isLegal(name)) {
+//        return '1';
+//    }
 
     MYSQL mysql;
     MYSQL_RES *res = NULL;
-    char cmd[200] = {0};
+    char cmd[300] = {0};
 
     //查询是否用户名已经注册
     if(NULL == mysql_init(&mysql)) {
@@ -173,12 +173,9 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
 {
     if(name == NULL)
         return '1';
-    if('0' != isLegal(name)) {
-        return '1';
-    }
 
     MYSQL mysql;
-    char cmd[200] = {0};
+    char cmd[300] = {0};
 
     if(NULL == mysql_init(&mysql)) {
         printf("mysql_init error: %s \n", mysql_error(&mysql));
@@ -210,7 +207,7 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
     }
 }
 
-//返回‘0’表示合法的，否则返回‘1’
+//返回‘0’表示合法的，否则返回‘1’,因为将数据库不在存储明文了，所以也不怕数据不合法了，都是随机的MD5值
 char isLegal(char *name)
 {
     int flag = '1';

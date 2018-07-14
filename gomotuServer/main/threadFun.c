@@ -50,7 +50,7 @@ void readFd(int fd, char **msg, int epollfd)
 		len = read(fd, buf, BUFSIZE);
 		if(len == -1) {
 		 	if(errno == EAGAIN) {	//读取完毕
-				printf("read over fd:%d!\n", fd);
+				printf("read over fd:%d.\n", fd);
 				//set_log("read fd over");	//还需要将函数设置成为可接受可变参数的
 				break;
 			}
@@ -86,16 +86,20 @@ void readFd(int fd, char **msg, int epollfd)
 			*/
 			break;
 		}
-		else {	//应该不会执行到这里，做个测试
-			printf("fd=%d,len=%d;\n", fd, len);
+		else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完1024字节应该没有问题
+			printf("len>0时: fd=%d,len=%d;\n", fd, len);
+
 			strcat(tmp, buf);
 			memset(buf, 0, BUFSIZE);
 		}
 	}
     //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密
-    aesDecrypt(tmp, buf, myaes_Key);
+	
+	//test:
+//    aesDecrypt(tmp, buf, myaes_Key);
 
-	printf("fd=%d, len=%d, msg=%s;\n", fd, len, *msg);	//看看最终的信息有没有读错
+	memcpy(*msg, tmp, BUFSIZE);
+//	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, len, *msg);	//看看最终的信息有没有读错
 }
 
 //分析数据报并且调用相应的函数
@@ -181,12 +185,12 @@ struct node* findFd(int fd, struct node *head)
 void login(int fd, char* msg)
 {
 	/*查询数据库是否允许登录*/
-    char nameBuf[16] = {0};
+    char nameBuf[17] = {0};
     char *tmp = msg;
-    char pwdBuf[16] = {0};
+    char pwdBuf[17] = {0};
 	char *img_dir = NULL;	//图片的目录
-    char nameOut[16] = {0};
-    char pwdOut[16] = {0};
+    char nameOut[17] = {0};
+    char pwdOut[17] = {0};
 
 	//将name和pwd读取出来
     for(int i = 0;i < 16; ++i) {
@@ -196,22 +200,26 @@ void login(int fd, char* msg)
         pwdBuf[i] = *(tmp + i + 17);
     }
 
+	//test:
+	printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
+
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
 
-    char yesOrNo = isRegister(nameOut, pwdOut, &img_dir);
+    char yesOrNo = isRegister(nameOut, pwdOut, &img_dir);//读取图片路径
 
 	/*TODO:暂时不读取图片也不将图片发送给客户端*/
-	printf("name:%s,img:%s\n", nameBuf, img_dir);
-	free(img_dir);	//释放图片路径的资源
+
 
 	/*返回判断结果*/
-	if(yesOrNo == '0')		//可以登录
+	if(yesOrNo == '0') {		//可以登录
 		write(fd, "11", 2);
-	else					//不可以
+		free(img_dir);	//释放图片路径的资源
+	}
+	else	//不可登录
 		write(fd, "10", 2);
-	/*断开连接*/
-	close(fd);
+	/*断开连接*/	//不能随意的断开连接，断开连接需要清除epollfd的监听
+//	close(fd);
 }
 /*
 void startMatch(int fd, char* msg)
@@ -252,11 +260,12 @@ void registerCount(int fd, char *msg)
     //将数据写入数据库
     char *tmp = msg;
     char ret = 0;
-    char nameBuf[16] = {0};
-    char pwdBuf[16] = {0};
-    char nameOut[16] = {0};
-    char pwdOut[16] = {0};
+    char nameBuf[17] = {0};//需要多一个字节做结尾不然printf这类就函数不知道结尾
+    char pwdBuf[17] = {0};
+    char nameOut[17] = {0};
+    char pwdOut[17] = {0};
 
+	//可以作为函数提取出来
     for(int i = 0;i < 16; ++i) {
         nameBuf[i] = *(tmp + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
     }
@@ -264,18 +273,22 @@ void registerCount(int fd, char *msg)
         pwdBuf[i] = *(tmp + i + 17);
     }
 
+	//test:
+	//printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
+
     //数据库中密码存储MD5信息，不存明文
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
 
     //存储进数据库
-    ret = saveNameToMysql(nameOut, pwdOut, "./girl.jpg"); //图片暂时不管
+    ret = saveNameToMysql(nameOut, pwdOut, "./girl.jpg"); //TODO:获取图片的路径，先默认一个
     if(ret == '0') {
         write(fd, "31", 2);
-    } else if (ret == '1' || ret == '2') {
+    } 
+	else if (ret == '1' || ret == '2') {
         write(fd, "30", 2);
         printf("fd=%d,注册失败\n", fd);
-        set_log("注册失败。");
+        set_log("注册失败。registerCount");
     }
 }
 /*
@@ -347,11 +360,11 @@ void changeRival(int fd, char* msg)
 void updateMsg(int fd, char *msg)
 {
     //更新密码
-    char nameBuf[16] = {0};
+    char nameBuf[17] = {0};
     char *tmp = msg;
-    char pwdBuf[16] = {0};
+    char pwdBuf[17] = {0};
     char yesOrNo = '1';
-    char nameOut[16] = {0}, pwdOut[16] = {0};
+    char nameOut[17] = {0}, pwdOut[17] = {0};
 
     //将name和pwd读取出来
     for(int i = 0;i < 16; ++i) {
