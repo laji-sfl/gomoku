@@ -17,6 +17,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    //初始化RSA秘钥对
+    createRSAkey();
+
+    //创建全局的AES秘钥，如果要将每一个连接都创建不同的秘钥的话，就需要添加新的数据结构去保存fd与秘钥的对应关系，或者在数据库中保存fd对应的完整信息，这版本就简单的做了。
+    //extern char aes_key[16] = {0};    //测试如何在多文件中使用全局变量
+
     //创建套接字
     if((sockfd = CreateSocket(atoi(argv[2]), argv[1])) == -1) {
         printf("创建套接字失败\n");
@@ -58,17 +64,12 @@ int main(int argc, char *argv[])
 				arg->epollfd = epollFd;
 				arg->fd = sockfd;
 				newThreadToAddEpoll(arg);//创建一个新的线程将新连接的客户fd加入epoll的监听
-				//test
-				//printf("new connect!!\n");
             }
             //其他的与客户端通信的套接字
             else {
-                if('1' == addTaskToList(event_ptr[i].data.fd, thpoll)) { //添加到线程池的任务链表中
+                if('1' == addTaskToList(event_ptr[i].data.fd, epollFd,thpoll)) { //添加到线程池的任务链表中
 					set_log("mainServer addTaskToList失败");
 				}
-
-				//test
-				//printf("recv msg!!\n");
             }
         }
     }

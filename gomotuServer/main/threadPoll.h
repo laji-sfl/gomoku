@@ -26,6 +26,7 @@ struct ThPoll
 struct TaskNote
 {
     int fd; //文件描述符
+	int epollfd;	//epoll描述符
     struct TaskNote *next;
 };
 
@@ -33,7 +34,7 @@ struct TaskNote
 char initThreadPoll(int threadNum, struct ThPoll **thPoll);
 
 //往任务队列添加任务，并唤醒一个线程执行,'0'ok,'1'no
-char addTaskToList(int fd, struct ThPoll *thPoll);
+char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll);
 
 //线程执行处理函数
 void* threadFun(void *arg);

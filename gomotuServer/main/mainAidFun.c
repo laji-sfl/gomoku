@@ -100,12 +100,34 @@ void *threadFunAccept(void *arg)
 		}
 		printf("将fd：%d加入监听\n", confd);
 		epollAddFd(sockfd->epollfd, confd);//加入epoll监听
+
+        //连接成功之后，就直接将服务器的公钥发给客户端
+        //如果由服务器产生对称加密用的秘钥，就不需要将服务器公钥发给客户了，只需要接收客户的公钥，然后将加密的秘钥发给客户端就可以了。
+        sendPubKeyToClient(confd);
 	}
 
-	free(sockfd);
+    free(sockfd);   //参数
+	pthread_exit(NULL);
 }
 
 //void epollModFd(int fd)
 //{
 
 //}
+
+void sendPubKeyToClient(int fd)
+{
+    char *key = NULL;
+    char buf[1024] = {0};
+    buf[0] = 'C';       //网络协议的前缀
+
+    //TODO:从磁盘读取秘钥，写在这里会造成每一个连接都会读取秘钥，也可以写在初始化过程将秘钥存储在内存中减少读取的开销。
+    readPubKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
+    //TODO:在readPubKey中将二级指针改为栈区的buf，在内部直接调用strcat会效率更高并且省去了分配管理内存的麻烦。
+
+    strcat(buf, key);
+    //发送给客户端
+    write(fd, buf, strlen(buf));
+
+    free(key);
+}

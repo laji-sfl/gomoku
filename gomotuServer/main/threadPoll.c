@@ -3,6 +3,9 @@
  */
 
 #include "threadPoll.h"
+//#include "threadFun.h"
+
+extern void threadCall(struct TaskNote *arg);
 
 char initThreadPoll(int threadNum, struct ThPoll **thPoll)
 {
@@ -34,7 +37,7 @@ char initThreadPoll(int threadNum, struct ThPoll **thPoll)
     pthread_attr_destroy(&tattr);
 }
 
-char addTaskToList(int fd, struct ThPoll *thPoll)
+char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll)
 {
     //线程池被销毁了，就不允许添加任务
     if(thPoll->isEnd == '0') {
@@ -46,6 +49,7 @@ char addTaskToList(int fd, struct ThPoll *thPoll)
     //创建一个任务节点加入链表
     struct TaskNote *newTask = (struct TaskNote *)malloc(sizeof(struct TaskNote));
     newTask->fd = fd;
+	newTask->epollfd = epollfd;
 
     //需要加锁访问防止造成冲突，TODO:是否会出现死锁，或者饿死
     pthread_mutex_lock(&thPoll->thmutext);
@@ -90,8 +94,9 @@ void *threadFun(void *arg)
 
         //执行任务
 		printf("开始执行任务:%u \n", (unsigned int)pthread_self());
-        if(current != NULL);
-            /*TODO:运行任务处理函数*/
+        if(current != NULL)
+            /*运行任务处理函数*/
+			threadCall(current);
 
         free(current);  //执行完任务就释放任务节点
     }
