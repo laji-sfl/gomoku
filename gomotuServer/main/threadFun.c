@@ -12,16 +12,6 @@
 #include <string.h>
 #include <errno.h>
 
-/*	TODO:
- * 	下一个版本的服务器，将程序改为守护进程，将printf改为日志系统
- * 	面对tcp的连接的异常情况要考虑进去，将网络原理搞明白
- * 	添加对SIGINT的注册，这样就可以安全结束程序，或者监听标准输入，结束程序（对服务器进行管理）
- */
-
-//将mainServe.c中的数据结构的头指针拿过来
-//extern struct node *alreadyMt;		//已经匹配的玩家链表
-//extern struct node *waitMt;			//还没有匹配的玩家链表
-
 //任务处理函数入口
 void threadCall(struct TaskNote *arg)	//参数不需要在此函数释放
 {
@@ -105,30 +95,29 @@ void readFd(int fd, char **msg, int epollfd)
 //分析数据报并且调用相应的函数
 void analyzeMsg(char *msg, int fd)
 {
-	//处理函数都需要保证数据的同步，需要加锁
 	switch(msg[0]) 
 	{
 	case LOGIN:
 		login(fd, msg);
 		break;
-//	case STARTMATCH:
-//		startMatch(fd, msg);
-//		break;
+	case STARTMATCH:
+		startMatch(fd, msg);
+		break;
 	case REGISTER:
 		registerCount(fd, msg);
 		break;
-//	case MOVE:
-//		move(fd, msg);
-//		break;
-//	case UNDOMOVE:
-//		undoMove(fd, msg);
-//		break;
-//	case TALK:
-//		talk(fd, msg);
-//		break;
-//	case CHANGERIVAL:
-//		changeRival(fd, msg);
-//		break;
+	case MOVE:
+		move(fd, msg);
+		break;
+	case UNDOMOVE:
+		undoMove(fd, msg);
+		break;
+	case TALK:
+		talk(fd, msg);
+		break;
+	case CHANGERIVAL:
+		changeRival(fd, msg);
+		break;
     case CHANGEKEY:
         changeKey(fd, msg);
 		break;
@@ -146,17 +135,6 @@ void analyzeMsg(char *msg, int fd)
     free(msg);//释放读取的内容
 }
 
-//辅助函数
-int isExist(char *buf, char *msg)
-{
-	int i = 0;
-	while(buf[i++] == msg[i]) {		//i++ < i相等
-		if(buf[i] == '&')	//表示前面的都相等
-			return 1;
-	}
-	return 0;
-}
-
 //寻找描述符在链表中的位置
 struct node* findFd(int fd, struct node *head)
 {
@@ -170,16 +148,16 @@ struct node* findFd(int fd, struct node *head)
 }
 
 //查找已匹配的游戏，转发两个人之间的消息
-//void transmit(int fd, char *msg)
-//{
-//	pthread_rwlock_rdlock(&rwlock);
-//	struct node *tmp = findFd(fd, alreadyMt);
-//	pthread_rwlock_unlock(&rwlock);
-//	if(((struct game *)(tmp->pnext->pdata))->blackfd == fd)		//根据匹配的描述符直接进行转发
-//		write(((struct game *)(tmp->pnext->pdata))->whitefd, msg, strlen(msg));
-//	else
-//		write(((struct game *)(tmp->pnext->pdata))->blackfd, msg, strlen(msg));
-//}
+void transmit(int fd, char *msg)
+{
+	pthread_rwlock_rdlock(&rwlock);
+	struct node *tmp = findFd(fd, alreadyMt);
+	pthread_rwlock_unlock(&rwlock);
+	if(((struct game *)(tmp->pnext->pdata))->blackfd == fd)		//根据匹配的描述符直接进行转发
+		write(((struct game *)(tmp->pnext->pdata))->whitefd, msg, strlen(msg));
+	else
+		write(((struct game *)(tmp->pnext->pdata))->blackfd, msg, strlen(msg));
+}
 
 //根据宏来区分的不同功能函数
 void login(int fd, char* msg)
@@ -201,7 +179,7 @@ void login(int fd, char* msg)
     }
 
 	//test:
-	printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
+	//printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
 
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
@@ -218,43 +196,62 @@ void login(int fd, char* msg)
 	}
 	else	//不可登录
 		write(fd, "10", 2);
-	/*断开连接*/	//不能随意的断开连接，断开连接需要清除epollfd的监听
-//	close(fd);
 }
-/*
+
+//开始匹配
 void startMatch(int fd, char* msg)
 {
-	struct waitMatch *tmp = NULL;	//等待队列节点
-	struct game *newGame  = NULL;	//已匹配队列节点
-	char bufTmp[16] = {0};
+	struct waitMatch *newWait = NULL;	//新的等待队列节点
+	struct waitMatch *beDel = NULL;		//从等待队列拿出来的节点
+	struct game *newGame  = NULL;		//已匹配队列节点
+	char bufTmp[20] = {0};
+	char yesOrNo = '3';	
 
-	pthread_rwlock_wrlock(&rwlock);
+	//将代码从锁中拿出来，根据yesOrNo free
+	newGame = (struct game *)malloc(sizeof(struct game));		//创建新的已匹配节点
+	newWait = (struct waitMatch *)malloc(sizeof(struct waitMatch));	//创建新的等待匹配的节点
+
+	//锁住链表进行操作
+	pthread_rwlock_wrlock(&rwlock);	
 	if(getLength(waitMt) > 0) {
-		tmp = deleteNode(waitMt, waitMt->pnext->pdata);				//删除第一个进队列的
-		newGame = (struct game *)malloc(sizeof(struct game));		//创建新的已匹配节点
-		newGame->blackfd = tmp->fd;		//从等待队列中取出的玩家
+		beDel = deleteNode(waitMt, waitMt->pnext->pdata);		//删除第一个进队列的
+		newGame->blackfd = beDel->fd;	//从等待队列中取出的玩家
 		newGame->whitefd = fd;			//正在匹配的玩家
 		insertNode(alreadyMt, newGame);	//加入已匹配的队列
+		yesOrNo = '1';					//表示匹配成功
+	}
+	else {
+		newWait->fd = fd;
+		strcpy(newWait->name, msg+1);	//将name赋值
+		insertNode(waitMt, newWait);	//将节点加入等待队列
+		yesOrNo = '0';					//表示没有匹配成功
+	}
+	pthread_rwlock_unlock(&rwlock);
 
-		sprintf(bufTmp, "21%s", tmp->name);			//格式化
+	//为了减少锁住的代码量
+	if (yesOrNo == '1') { 				//匹配成功
+		sprintf(bufTmp, "21%s", beDel->name);
 		write(fd, bufTmp, strlen(bufTmp));//通知之前在等待队列中的人
 		memset(bufTmp, 0, sizeof(bufTmp));
 		sprintf(bufTmp, "21%s", msg+1);
-		write(tmp->fd, bufTmp, strlen(bufTmp));
-		free(tmp);						//释放从等待队列取出来的节点
+		write(beDel->fd, bufTmp, strlen(bufTmp));
+		free(beDel);					//释放从等待队列取出来的节点
+		free(newWait);					//因为匹配成功了，所以不存在新的等待节点
 		printf("new player matched\n");
+		set_log("new player matched");
 	}
-	else {
-		tmp = (struct waitMatch *)malloc(sizeof(struct waitMatch));	//创建新的等待匹配的节点
-		tmp->fd = fd;
-		strcpy(tmp->name, msg+1);	//将name赋值
-		insertNode(waitMt, tmp);	//将节点加入等待队列
+	else if (yesOrNo == '0') { 			//匹配不成功
+		free(newGame);					//因为匹配失败，所以不存在新的游戏节点
 		printf("new player startMatch\n");
+		set_log("new player wait match");
 		write(fd, "201", 3);			//没有匹配成功
 	}
-	pthread_rwlock_unlock(&rwlock);
+	else {
+		printf("error in startMatch");
+		set_log("error in startMatch");
+	}
 }
-*/
+
 void registerCount(int fd, char *msg)
 {
     //将数据写入数据库
@@ -265,7 +262,6 @@ void registerCount(int fd, char *msg)
     char nameOut[17] = {0};
     char pwdOut[17] = {0};
 
-	//可以作为函数提取出来
     for(int i = 0;i < 16; ++i) {
         nameBuf[i] = *(tmp + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
     }
@@ -281,7 +277,7 @@ void registerCount(int fd, char *msg)
     getMD5(pwdBuf, pwdOut);
 
     //存储进数据库
-    ret = saveNameToMysql(nameOut, pwdOut, "./girl.jpg"); //TODO:获取图片的路径，先默认一个
+    ret = saveNameToMysql(nameOut, pwdOut, "./girl.jpg"); //默认一个
     if(ret == '0') {
         write(fd, "31", 2);
     } 
@@ -291,7 +287,7 @@ void registerCount(int fd, char *msg)
         set_log("注册失败。registerCount");
     }
 }
-/*
+
 void move(int fd, char* msg)
 {
 	transmit(fd, msg);
@@ -311,20 +307,23 @@ void changeRival(int fd, char* msg)
 {
 	struct node *tmp;
 	struct game *beDel;
-	int rival;	//通知给对方，已经不想和你打了
-	pthread_rwlock_rdlock(&rwlock);
+	int rival;	//对方的文件描述符
+
+	pthread_rwlock_wrlock(&rwlock);
 	tmp = findFd(fd, alreadyMt);
-	if(tmp == NULL)
+	if(tmp == NULL) {	//不存在已经匹配的节点,说明对手已经发送过了
+		pthread_rwlock_unlock(&rwlock);
 		return;
+	}
 	beDel = deleteNode(alreadyMt, tmp->pnext->pdata);	//删除链表中的节点
+	pthread_rwlock_unlock(&rwlock);
+
 	rival = (fd == beDel->blackfd) ? beDel->whitefd : beDel->blackfd;
 	free(beDel);	//释放创建的已匹配的节点
-	pthread_rwlock_unlock(&rwlock);
-//	write(rival,"70",2);	//表示对方已重新匹配
-	close(rival);			//断开未点击玩家的连接
-//	startMatch(fd, msg);	//重新开始匹配,
-	close(fd);				//服务器不帮他匹配，让他自己重新连接服务器去匹配
-}*/
+	
+	//通知另一个人，对手已经不想和你玩了
+	write(rival, "70", 2);
+}
 
 
 //void timeOut(int fd, char* msg)
@@ -360,11 +359,9 @@ void changeRival(int fd, char* msg)
 void updateMsg(int fd, char *msg)
 {
     //更新密码
-    char nameBuf[17] = {0};
-    char *tmp = msg;
-    char pwdBuf[17] = {0};
-    char yesOrNo = '1';
+    char nameBuf[17] = {0}, pwdBuf[17] = {0};
     char nameOut[17] = {0}, pwdOut[17] = {0};
+    char *tmp = msg, yesOrNo = '1';
 
     //将name和pwd读取出来
     for(int i = 0;i < 16; ++i) {
@@ -379,45 +376,47 @@ void updateMsg(int fd, char *msg)
 
     //更新
     yesOrNo = updateUserMsg(nameOut, pwdOut, NULL);
+    //yesOrNo = updateUserMsg(nameBuf, pwdBuf, NULL);
 
     if(yesOrNo == '1')
-        write(fd, "A1", 2);
+        write(fd, "A0", 2);//更新失败
     else
-        write(fd, "A0", 2);
+        write(fd, "A1", 2);//成功
 }
 
 void updateImg(int fd, char *msg)
 {
-    char imgBuf[1024] = {0};    //存储图片
-    char imgPwd[50] = {0};        //图片信息
+    char imgPwd[100] = {0};        //图片路径
+	char nameBuf[17] = {0}, nameOut[17] = {0};
     char yesOrNo = '1';
-    int file_fd, n = 0;
 
-    //读取
-    //问题，一个线程处理一个文件描述符，处理结束后线程退出，文件描述符
-    sprintf(imgPwd, "/home/sfl/download/%s",msg);
-    file_fd = open(imgPwd, O_CREAT | O_RDWR | O_TRUNC, 0644);
-    while((n = read(fd, imgBuf, 1024)) > 0) {
-        write(file_fd, imgBuf, n);
-    }
-    close(file_fd);
+	//读取msg中的名字
+	for(int i = 0;i < 16; ++i) {
+		nameBuf[i] = *(msg + i + 1);
+	}
+    sprintf(imgPwd, "/home/sfl/download/%s", nameBuf);	//拼接图片的存储路径
+	getMD5(nameBuf, nameOut);
 
     //更新
-    yesOrNo = updateUserMsg(msg+1, NULL, imgPwd);
+    yesOrNo = updateUserMsg(nameOut, NULL, imgPwd);
+    //yesOrNo = updateUserMsg(nameBuf, NULL, imgPwd);
 
     if(yesOrNo == '1')
-        write(fd, "A1", 2);
+        write(fd, "A0", 2);//失败
     else
-        write(fd, "A0", 2);
+        write(fd, "A1", 2);//成功
 }
 
 //只负责接收客户端的公钥
 void changeKey(int fd, char *msg)
 {
-    //产生一个aes加密用的秘钥，TODO:下个版本，需要产生随机的秘钥，是否对每一个fd一个秘钥需要考虑
-    //接收客户端的公钥,加密AES秘钥
-    char buf[1024] = {0};
-    pubcrypt(msg+1, myaes_Key, buf);  //指针加一是否会造成错误，例如大小端？
-    //将pubcrypt秘钥存储起来,使用全局的固定秘钥了～
-    write(fd, buf, strlen(buf));    //是否可以对密文进行strlen
+    //接收客户端的公钥,加密AES秘钥,将加密后的AES秘钥发送给客户端
+    char cipherBuf[1024] = {0};
+	char msgBuf[1024] = {0};
+	msgBuf[0] = 'D';	//D表示收到的是AES秘钥
+
+    pubcrypt(msg+1, myaes_Key, cipherBuf); 
+	strcat(msgBuf, cipherBuf);
+
+    write(fd, msgBuf, strlen(msgBuf));   
 }

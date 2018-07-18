@@ -122,7 +122,7 @@ void sendPubKeyToClient(int fd)
 {
     char *key = NULL;
     char buf[2048] = {0};
-    buf[0] = 'C';       //网络协议的前缀
+    buf[0] = 'C';       //C表示接收到的是公钥
 
     //TODO:从磁盘读取秘钥，写在这里会造成每一个连接都会读取秘钥，也可以写在初始化过程将秘钥存储在内存中减少读取的开销。
     readPubKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
