@@ -28,7 +28,7 @@ void threadCall(struct TaskNote *arg)	//参数不需要在此函数释放
 void readFd(int fd, char **msg, int epollfd)
 {
 	int len = 0;	//读取的长度
-	char tmp[1024] = {0};
+	char tmp[BUFSIZE] = {0};
 
 	//传出msg的内存区域指针
 	char *buf = (char *)malloc(BUFSIZE);	//直接分配1024个字节，不去节省内存了（这个之后再说）
@@ -61,16 +61,18 @@ void readFd(int fd, char **msg, int epollfd)
 			break;
 		}
 		else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完1024字节应该没有问题
-			printf("len>0时: fd=%d,len=%d;\n", fd, len);
-
+			printf("len>0时: fd=%d,len=%d\nmsg=%s\n", fd, len, buf);
 			strcat(tmp, buf);
 			memset(buf, 0, BUFSIZE);
 		}
 	}
-    //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密
-    aesDecrypt(tmp, buf, myaes_Key);
+    //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密,第一个字节不加密，CD不加密
+	if (tmp[0] != 'C' && tmp[0] != 'D') {
+		aesDecrypt(tmp+1, buf, myaes_Key);
+		memcpy(*msg, buf, BUFSIZE);
+	}
+	else memcpy(*msg, tmp, BUFSIZE);
 
-	memcpy(*msg, tmp, BUFSIZE);
 //	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, len, *msg);	//看看最终的信息有没有读错
 }
 
@@ -376,11 +378,13 @@ void updateImg(int fd, char *msg)
 void changeKey(int fd, char *msg)
 {
     //接收客户端的公钥,加密AES秘钥,将加密后的AES秘钥发送给客户端
-    char cipherBuf[1024] = {0};
-	char msgBuf[1024] = {0};
-	msgBuf[0] = 'D';	//D表示收到的是AES秘钥
+    char cipherBuf[BUFSIZE] = {0};//加密后的秘钥
+	char msgBuf[BUFSIZE] = {0};//发送给客户的数据报
+	strcpy(msgBuf, msg+1);
 
-    pubcrypt(msg+1, myaes_Key, cipherBuf); 
+    pubcrypt(msgBuf, myaes_Key, cipherBuf); 
+	memset(msgBuf, 0, BUFSIZE);
+	msgBuf[0] = 'D';	//D表示收到的是AES秘钥
 	strcat(msgBuf, cipherBuf);
 
     write(fd, msgBuf, strlen(msgBuf));   

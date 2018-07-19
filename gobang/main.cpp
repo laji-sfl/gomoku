@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     QString playNameG = QString("shilada");   //来在多个对话框之间传递
+    char aesKey[1024] = {0};
     char num = '1';       //模式
 
     //登录判断对话框
@@ -16,6 +17,7 @@ int main(int argc, char* argv[])
     if(lo->exec() != QDialog::Accepted)
         return -1;
     playNameG = lo->playername;
+    strcpy(aesKey, lo->AESkey);
     delete lo;      //及时结束回收资源
 
     //选择游戏模式对话框

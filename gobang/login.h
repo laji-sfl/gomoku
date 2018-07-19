@@ -21,7 +21,10 @@ public:
     void setWidget();
     QTcpSocket *socket;     //客户端socket
     QString playername;
+    char AESkey[1024];
     bool flag2;
+    bool tcpError;
+    bool recvAESkey;
 
 public slots:
     void inClicked();   //注册的槽函数

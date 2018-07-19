@@ -1,12 +1,13 @@
 #ifndef SDD_H
 #define SDD_H
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /*
  *   加密模块的接口
  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -42,7 +43,7 @@ void aesCrypt(char *plainText, char *ciphetext, char *key);
 //aes解密
 void aesDecrypt(char *ciphetext, char *plaintext, char *key);
 
-#ifdef __cpluscplus
+#ifdef __cplusplus
 }
 #endif
 

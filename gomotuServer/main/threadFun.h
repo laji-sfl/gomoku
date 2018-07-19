@@ -10,7 +10,7 @@
 #include "accessMysql.h"
 #include "encryption.h"
 
-#define BUFSIZE 1024
+#define BUFSIZE 2048
 
 //将mainServe.c中的数据结构的头指针拿过来
 struct node *alreadyMt;		//已经匹配的玩家链表

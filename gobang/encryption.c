@@ -81,8 +81,6 @@ void pricrypt(char *priKey, char *ciphetext, char *plaintext)
 
     rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
 
-    //printf("ljai 1");
-
     int len = RSA_size(rsa);
     char *beDecrypt = (char *)malloc(len + 1);
     memset(beDecrypt, 0, len + 1);

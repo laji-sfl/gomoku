@@ -8,7 +8,8 @@ SOURCES += \
     login.cpp \
     choosepattern.cpp \
     mainwnd.cpp \
-    humancomputeplay.cpp
+    humancomputeplay.cpp \
+    encryption.c
 
 HEADERS += \
     board.h \
@@ -17,6 +18,9 @@ HEADERS += \
     login.h \
     choosepattern.h \
     mainwnd.h \
-    humancomputeplay.h
+    humancomputeplay.h \
+    encryption.h
+
+LIBS += -lcrypto
 
 CONFIG += c++11

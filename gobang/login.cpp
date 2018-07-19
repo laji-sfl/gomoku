@@ -1,6 +1,7 @@
 #include "login.h"
 #include <QMessageBox>
 #include <QDebug>
+#include "encryption.h"
 #include <QByteArray>
 #include <QHostAddress>
 
@@ -9,6 +10,12 @@ Login::Login(QWidget *parent) : QDialog(parent)
     //将控件初始化
     this->setWidget();
     flag2 = false;  // true 表示注册成功了
+    tcpError = false;   //连接没有错误
+    recvAESkey = false; //是否收到了AES秘钥
+    memset(AESkey, 0, 1024);
+
+    //创建公钥
+    createRSAkey();
 
     //信号与槽
     connect(this->sign_in, SIGNAL(clicked(bool)), this, SLOT(inClicked()));
@@ -25,16 +32,18 @@ Login::Login(QWidget *parent) : QDialog(parent)
  * 结束程序，需要了解，执行close的原理是否会释放内存，是否结束程序，是否向下执行
  *   这里不懂原理，需不需要释放这个对话框的资源，还是会自动释放。
  */
-
+//tcp连接出现的问题他都会弹出
 void Login::printErr()
 {
     QMessageBox::warning(this, "waring", socket->errorString(), QMessageBox::Yes, QMessageBox::Yes);
+    tcpError = true;
 }
 
 //读取服务器的数据
 void Login::readSock()
 {
     QByteArray str = socket->readAll();
+    qDebug() << str << endl;    //打印出接收的所有消息
     if(str.at(0) == '1')
     {
         if(str.at(1) == '1')
@@ -60,6 +69,35 @@ void Login::readSock()
             return;
         }
     }
+    else if(str.at(0) == 'C')
+    {
+        //接收服务器公钥,将客户端公钥发送过去
+        char *key;
+        char file[20] = "./pub_str_key";
+        readRSAKey(file, &key);
+
+        QByteArray msg;
+        msg.append('C');
+        msg.append(key);
+        socket->write(msg);
+        free(key);
+        qDebug() << "recv pub key and send my pub key" << endl;
+    }
+    else if(str.at(0) == 'D')
+    {
+        //接收aes秘钥并保存起来
+        char *key;  //RSA秘钥
+        char file[20] = "./pri_str_key";
+        memset(AESkey, 0, 1024);
+
+        //str.remove(0, 1);   //将开头的D去掉
+        char *cipherText = const_cast<char *>(str.toStdString().c_str());//密文
+        readRSAKey(file, &key);//读取私钥
+        pricrypt(key, cipherText+1, AESkey);//解密
+        free(key);
+        recvAESkey = true;
+        qDebug() << "recv aes key:" << AESkey << endl;
+    }
     else
     {
         QMessageBox::warning(this, "waring", "can not login!", QMessageBox::Yes, QMessageBox::Yes);
@@ -70,6 +108,11 @@ void Login::readSock()
 //槽函数登录
 void Login::inClicked()
 {
+    if(tcpError)
+        exit(0);
+    if(!recvAESkey)
+        return;
+
     //获取控件的值,并判断合法性
     QString strName = this->name->text();
     QString strPwd = this->pwd->text();
@@ -91,17 +134,30 @@ void Login::inClicked()
 
     //向服务器发送验证数据
     QByteArray str;
-    str.append('1');
     str.append(strName);
-    str.append(':');
+    //name和pwd必须保证都是16字节
+    for (int i = 0;i < 16 - strName.length(); ++i)
+        str.append('0');
     str.append(strPwd);
-    str.append('&');
-    socket->write(str);
+    for (int i = 0;i < 16 - strName.length(); ++i)
+        str.append('0');
+    //加密
+    char cipher[1024] = {0};
+    aesCrypt(const_cast<char*>(str.toStdString().c_str()), cipher,AESkey);
+
+    QByteArray msg;
+    msg.append('1');
+    msg.append(cipher);
+    socket->write(msg);
 }
 
 //槽函数注册
 void Login::onClicked()
 {
+    if(tcpError)
+        exit(0);
+    if(!recvAESkey)
+        return;
     if(flag2)   //已经注册了
         return;
 
@@ -117,12 +173,20 @@ void Login::onClicked()
 
     //向服务器发送注册数据
     QByteArray str;
-    str.append('3');
     str.append(strName);
-    str.append(':');
+    for (int i = 0;i < 16 - strName.length(); ++i)
+        str.append('0');
     str.append(strPwd);
-    str.append('&');
-    socket->write(str);
+    for (int i = 0;i < 16 - strName.length(); ++i)
+        str.append('0');
+    //加密
+    char cipher[1024] = {0};
+    aesCrypt(const_cast<char*>(str.toStdString().c_str()), cipher,AESkey);
+
+    QByteArray msg;
+    msg.append('3');
+    msg.append(cipher);
+    socket->write(msg);
 }
 
 //设置控件

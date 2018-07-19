@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
         retNum = epoll_wait(epollFd, event_ptr, EVENTNUM, -1);
 
 		//test
-		printf("epoll wait retNum: %d.\n", retNum);
+		printf("\n\nepoll wait retNum: %d.\n", retNum);
 
         //循环的处理每一个响应的文件描述符
         for(i = 0;i < retNum; ++i) {

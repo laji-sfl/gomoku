@@ -58,7 +58,7 @@ char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll)
     pthread_mutex_unlock(&thPoll->thmutext);
 
     //唤醒一个线程
-	printf("加入任务链表，唤醒一个线程:addTaskToList\n");
+//	printf("加入任务链表，唤醒一个线程:addTaskToList\n");
     pthread_cond_signal(&thPoll->thcond);
 	return '0';
 }

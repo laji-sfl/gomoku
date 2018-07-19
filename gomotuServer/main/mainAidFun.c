@@ -120,24 +120,24 @@ void *threadFunAccept(void *arg)
 
 void sendPubKeyToClient(int fd)
 {
-    char *key = NULL;
-    char buf[2048] = {0};
-    buf[0] = 'C';       //C表示接收到的是公钥
+//    char *key = NULL;
+//    char buf[2048] = {0};
+//    buf[0] = 'C';       //C表示接收到的是公钥
 
     //TODO:从磁盘读取秘钥，写在这里会造成每一个连接都会读取秘钥，也可以写在初始化过程将秘钥存储在内存中减少读取的开销。
-    readPubKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
+//    readRSAKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
     //TODO:在readPubKey中将二级指针改为栈区的buf，在内部直接调用strcat会效率更高并且省去了分配管理内存的麻烦。
 
-    strcat(buf, key);
+//    strcat(buf, key);
 
 	//test:
 	//printf("pub-key:%s\n", key);
 
     //发送给客户端
-    write(fd, buf, strlen(buf));
+    write(fd, "C", 1);
 
 	//test:
 	//printf("buf:%s\nstrlen:%d\n", buf, strlen(buf));
 
-    free(key);
+    //free(key);
 }
