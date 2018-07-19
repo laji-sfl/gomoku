@@ -21,8 +21,7 @@
 void createRSAkey();
 
 //读取磁盘上的公私秘钥,二级指针传出需要释放内存
-void readPubKey(char *str, char **pubkey);
-void readPriKey(char *str, char **prikey);
+void readRSAKey(char *str, char **pubkey);
 
 //用公钥加密
 void pubcrypt(char *pubKey, char *plainText, char *ciphetext);

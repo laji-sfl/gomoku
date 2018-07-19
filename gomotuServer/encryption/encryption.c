@@ -3,25 +3,15 @@
  * 加密接口的实现
  */
 
-void readPubKey(char *str, char **pubkey)
+void readRSAKey(char *str, char **key)
 {
     int fd = 0;
-    char *pubstr = (char *)malloc(KEY_LEN);
-    *pubkey = pubstr;
+    char *tmp = (char *)malloc(KEY_LEN);
+    memset(tmp, 0, KEY_LEN);
+    *key = tmp;
 
     fd = open(str, O_RDONLY);
-    read(fd, pubstr, KEY_LEN);
-    close(fd);
-}
-
-void readPriKey(char *str, char **prikey)
-{
-    int fd = 0;
-    char *pristr = (char *)malloc(KEY_LEN);
-    *prikey = pristr;
-
-    fd = open(str, O_RDONLY);
-    read(fd, pristr, KEY_LEN);
+    read(fd, tmp, KEY_LEN);
     close(fd);
 }
 
@@ -49,8 +39,8 @@ void createRSAkey()
     pub_str[pub_len] = '\0';
 
     //写入磁盘
-    fdu = open("./pri_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
-    fdr = open("./pub_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
+    fdu = open("./pub_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
+    fdr = open("./pri_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
     write(fdu, pub_str, pub_len);
     write(fdr, pri_str, pri_len);
     close(fdr);
@@ -66,9 +56,9 @@ void createRSAkey()
 
 void pubcrypt(char *pubKey, char *plainText, char *ciphetext)
 {
-    BIO *keybio = BIO_new_mem_buf((unsigned char *)pubKey, -1);
+    BIO *keybio = BIO_new_mem_buf(pubKey, strlen(pubKey));
     RSA *rsa = RSA_new();
-    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa, NULL, NULL);
+    PEM_read_bio_RSAPublicKey(keybio, &rsa, NULL, NULL);
 
     int len = RSA_size(rsa);
     char *beEncrypt = (char *)malloc(len + 1);
@@ -85,11 +75,13 @@ void pubcrypt(char *pubKey, char *plainText, char *ciphetext)
 
 void pricrypt(char *priKey, char *ciphetext, char *plaintext)
 {
+    printf("ljai 1");
+    BIO *keybio = BIO_new_mem_buf(priKey, strlen(priKey));
+    printf("ljai 2");
     RSA *rsa = RSA_new();
-    BIO *keybio;
-    keybio = BIO_new_mem_buf((unsigned char *)priKey, -1);
-
-    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
+    printf("ljai 3");
+    PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
+    printf("ljai 4");
 
     int len = RSA_size(rsa);
     char *beDecrypt = (char *)malloc(len + 1);
