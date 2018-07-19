@@ -48,5 +48,7 @@ void changeKey(int fd, char *msg);		//接收客户端的公钥
 //辅助函数
 struct node* findFd(int fd, struct node *head);		//根据文件描述符，查找出所在链表的位置
 void transmit(int fd, char *msg);					//查找已匹配的游戏，转发两个人之间的消息
+void getNamePwd(char *msg, char *name, char *pwd);	//从msg中提取出名字和密码
+void cleanFd(int fd, int epollfd);					//将监听的fd去除，删除链表的节点，通知另一方
 
 #endif

@@ -47,33 +47,17 @@ void readFd(int fd, char **msg, int epollfd)
 			else {	//有错误说明连接出现了问题，就直接断开连接，取出epoll的监听
 				printf("read error:%d!\n", fd);
 				set_log("read error!;");
-				close(fd);
-				epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
-				//TODO:清理匹配信息
+				
+				//清理匹配信息
+				cleanFd(fd, epollfd);
 				break;
 			}
 		}
 		else if(len == 0) {	//遇到文件结尾
 			printf("len == 0; close fd: %d\n", fd);
 			set_log("close fd;");
-			close(fd);	
-			epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
 			
-			//TODO:清理匹配的队列信息
-			/*
-			struct node *tmp = NULL;
-			struct game *beDel = NULL;
-			if((tmp = findFd(fd, alreadyMt)) != NULL) {
-				pthread_rwlock_rdlock(&rwlock);
-				free(deleteNode(alreadyMt, tmp->pnext->pdata));	//删除链表中的节点
-				pthread_rwlock_unlock(&rwlock);
-			}
-			if((tmp = findFd(fd, waitMt)) != NULL) {
-				pthread_rwlock_rdlock(&rwlock);
-				free(deleteNode(waitMt, tmp->pnext->pdata));	//删除链表中的节点
-				pthread_rwlock_unlock(&rwlock);
-			}
-			*/
+			cleanFd(fd, epollfd);
 			break;
 		}
 		else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完1024字节应该没有问题
@@ -84,9 +68,7 @@ void readFd(int fd, char **msg, int epollfd)
 		}
 	}
     //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密
-	
-	//test:
-//    aesDecrypt(tmp, buf, myaes_Key);
+    aesDecrypt(tmp, buf, myaes_Key);
 
 	memcpy(*msg, tmp, BUFSIZE);
 //	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, len, *msg);	//看看最终的信息有没有读错
@@ -170,13 +152,7 @@ void login(int fd, char* msg)
     char nameOut[17] = {0};
     char pwdOut[17] = {0};
 
-	//将name和pwd读取出来
-    for(int i = 0;i < 16; ++i) {
-        nameBuf[i] = *(tmp + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
-    }
-    for(int i = 0;i < 16; ++i) {
-        pwdBuf[i] = *(tmp + i + 17);
-    }
+	getNamePwd(msg, nameBuf, pwdBuf);
 
 	//test:
 	//printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
@@ -262,12 +238,7 @@ void registerCount(int fd, char *msg)
     char nameOut[17] = {0};
     char pwdOut[17] = {0};
 
-    for(int i = 0;i < 16; ++i) {
-        nameBuf[i] = *(tmp + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
-    }
-    for(int i = 0;i < 16; ++i) {
-        pwdBuf[i] = *(tmp + i + 17);
-    }
+	getNamePwd(msg, nameBuf, pwdBuf);
 
 	//test:
 	//printf("name:%s;pwd:%s\n", nameBuf, pwdBuf);
@@ -364,12 +335,7 @@ void updateMsg(int fd, char *msg)
     char *tmp = msg, yesOrNo = '1';
 
     //将name和pwd读取出来
-    for(int i = 0;i < 16; ++i) {
-        nameBuf[i] = *(tmp + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
-    }
-    for(int i = 0;i < 16; ++i) {
-        pwdBuf[i] = *(tmp + i + 17);
-    }
+	getNamePwd(msg, nameBuf, pwdBuf);
 
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
@@ -390,10 +356,9 @@ void updateImg(int fd, char *msg)
 	char nameBuf[17] = {0}, nameOut[17] = {0};
     char yesOrNo = '1';
 
-	//读取msg中的名字
-	for(int i = 0;i < 16; ++i) {
-		nameBuf[i] = *(msg + i + 1);
-	}
+	//提取name
+	getNamePwd(msg, nameBuf, NULL);
+
     sprintf(imgPwd, "/home/sfl/download/%s", nameBuf);	//拼接图片的存储路径
 	getMD5(nameBuf, nameOut);
 
@@ -419,4 +384,58 @@ void changeKey(int fd, char *msg)
 	strcat(msgBuf, cipherBuf);
 
     write(fd, msgBuf, strlen(msgBuf));   
+}
+
+//提取名字和密码
+void getNamePwd(char *msg, char *name, char *pwd)
+{
+	int i = 0;
+	if (msg == NULL) return;
+
+	if (name != NULL) {
+	    for(i = 0;i < 16; ++i) {
+        	name[i] = *(msg + i + 1);    //因为msg的格式就是3(name16字节)(pwd16字节)
+    	}
+	}
+
+	if (pwd != NULL) {
+	    for(i = 0;i < 16; ++i) {
+	        pwd[i] = *(msg + i + 17);
+	    }
+	}
+}
+
+//清理文件描述符
+void cleanFd(int fd, int epollfd)
+{
+	struct node *tmped = NULL;	//已经匹配
+	struct node *tmping = NULL;	//在等待匹配
+	struct game *beDel;
+	int tmpfd;	//对手
+	
+	//查找是否存在
+	pthread_rwlock_rdlock(&rwlock);
+	tmped = findFd(fd, alreadyMt);
+	tmping = findFd(fd, waitMt);
+	pthread_rwlock_unlock(&rwlock);
+
+	if (tmping != NULL)	{
+		pthread_rwlock_wrlock(&rwlock);
+		free(deleteNode(waitMt, tmping->pnext->pdata));
+		pthread_rwlock_unlock(&rwlock);
+	}
+
+	if (tmped != NULL) {
+		beDel = (struct game *)(tmped->pnext->pdata);
+		tmpfd = (beDel->whitefd == fd) ? beDel->blackfd : beDel->whitefd;
+		//通知另一个，或者直接将另一个断开连接
+		epoll_ctl(epollfd, EPOLL_CTL_DEL, tmpfd, NULL);
+		close(tmpfd);
+
+		free(deleteNode(alreadyMt, beDel));	
+	}
+
+	//根据epollfd删除
+	epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+	close(fd);
 }
