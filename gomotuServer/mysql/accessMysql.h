@@ -1,5 +1,5 @@
 /*
- *	头文件，MySQL数据库的头文件
+ *	数据库操作的头文件
  *  编译MySQL的库函数的时候，需要加上gcc的参数 `mysql_config --cflags --libs`
  */
 

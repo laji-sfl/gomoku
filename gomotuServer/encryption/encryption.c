@@ -6,11 +6,11 @@
 void readPubKey(char *str, char **pubkey)
 {
     int fd = 0;
-    char *pubstr = (char *)malloc(KEY_LEN / 2);
+    char *pubstr = (char *)malloc(KEY_LEN);
     *pubkey = pubstr;
 
-    fd = open("./pri_str_key", O_RDWR);
-    read(fd, pubstr, KEY_LEN / 2);
+    fd = open(str, O_RDONLY);
+    read(fd, pubstr, KEY_LEN);
     close(fd);
 }
 
@@ -20,7 +20,7 @@ void readPriKey(char *str, char **prikey)
     char *pristr = (char *)malloc(KEY_LEN);
     *prikey = pristr;
 
-    fd = open("./pub_str_key", O_RDWR);
+    fd = open(str, O_RDONLY);
     read(fd, pristr, KEY_LEN);
     close(fd);
 }
@@ -48,17 +48,18 @@ void createRSAkey()
     pri_str[pri_len] = '\0';
     pub_str[pub_len] = '\0';
 
-    fdu = open("./pri_str_key", O_RDWR | O_CREAT, 0664);
-    fdr = open("./pub_str_key", O_RDWR | O_CREAT, 0664);
+    //写入磁盘
+    fdu = open("./pri_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
+    fdr = open("./pub_str_key", O_RDWR | O_CREAT | O_TRUNC, 0664);
     write(fdu, pub_str, pub_len);
     write(fdr, pri_str, pri_len);
     close(fdr);
     close(fdu);
 
+    //释放内存
     RSA_free(keypair);
     BIO_free_all(pub);
     BIO_free_all(pri);
-
     free(pri_str);
     free(pub_str);
 }

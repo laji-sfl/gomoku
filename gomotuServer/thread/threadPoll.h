@@ -5,10 +5,11 @@
 #ifndef __THREADPOLL_H__
 #define __THREADPOLL_H__
 
-#include <thread>
+#include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "../epoll/mainAidFun.h"	//调用日志函数
+#include <stdlib.h>
+#include "mainAidFun.h"	//调用日志函数
 
 //参数结构体
 //线程池的控制结构
@@ -25,14 +26,15 @@ struct ThPoll
 struct TaskNote
 {
     int fd; //文件描述符
+	int epollfd;	//epoll描述符
     struct TaskNote *next;
 };
 
-//初始化线程池,'0'成功，‘1’失败，参数线程个数
-char initThreadPoll(int threadNum, struct ThPoll *thPoll);
+//初始化线程池,'0'成功，‘1’失败，参数线程个数,二级指针将分配的内存地址传出
+char initThreadPoll(int threadNum, struct ThPoll **thPoll);
 
-//往任务队列添加任务，并唤醒一个线程执行
-char addTaskToList(int fd, struct ThPoll *thPoll);
+//往任务队列添加任务，并唤醒一个线程执行,'0'ok,'1'no
+char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll);
 
 //线程执行处理函数
 void* threadFun(void *arg);

@@ -73,7 +73,71 @@ void set_log(char *str)
     close(fd);
 }
 
+void newThreadToAddEpoll(struct thArg *sockfd)
+{
+	pthread_t tid;
+	pthread_create(&tid, NULL, threadFunAccept, sockfd);
+	pthread_detach(tid);
+}
+
+void *threadFunAccept(void *arg)
+{
+	struct thArg *sockfd = (struct thArg *)arg;
+	int confd = 0;
+	struct sockaddr_in clieaddr;
+	int clielen = 0;
+	
+	while(1) {
+		if((confd = accept(sockfd->fd, (struct sockaddr *)&clieaddr, &clielen)) == -1) {
+			if(errno == EAGAIN || errno == EWOULDBLOCK) {
+				printf("accept EAGAIN\n");
+				break;
+			} else {
+				printf("error accept\n");
+				set_log("newThreadAddToEpoll accept error");
+				break;
+			}
+		}
+		printf("将fd：%d加入监听\n", confd);
+		epollAddFd(sockfd->epollfd, confd);//加入epoll监听
+
+        //连接成功之后，就直接将服务器的公钥发给客户端
+        //如果由服务器产生对称加密用的秘钥，就不需要将服务器公钥发给客户了，只需要接收客户的公钥，然后将加密的秘钥发给客户端就可以了。
+        sendPubKeyToClient(confd);
+	}
+
+    free(sockfd);   //参数
+	//test：
+	printf("thread id:%u exit\n", (unsigned int)pthread_self());
+
+	pthread_exit(NULL);
+}
+
 //void epollModFd(int fd)
 //{
 
 //}
+
+void sendPubKeyToClient(int fd)
+{
+    char *key = NULL;
+    char buf[2048] = {0};
+    buf[0] = 'C';       //C表示接收到的是公钥
+
+    //TODO:从磁盘读取秘钥，写在这里会造成每一个连接都会读取秘钥，也可以写在初始化过程将秘钥存储在内存中减少读取的开销。
+    readPubKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
+    //TODO:在readPubKey中将二级指针改为栈区的buf，在内部直接调用strcat会效率更高并且省去了分配管理内存的麻烦。
+
+    strcat(buf, key);
+
+	//test:
+	//printf("pub-key:%s\n", key);
+
+    //发送给客户端
+    write(fd, buf, strlen(buf));
+
+	//test:
+	//printf("buf:%s\nstrlen:%d\n", buf, strlen(buf));
+
+    free(key);
+}
