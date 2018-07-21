@@ -54,7 +54,7 @@ void createRSAkey()
     free(pub_str);
 }
 
-void pubcrypt(char *pubKey, char *plainText, char *ciphetext)
+int pubcrypt(char *pubKey, char *plainText, char *ciphetext)
 {
     BIO *keybio = BIO_new_mem_buf(pubKey, strlen(pubKey));
     RSA *rsa = RSA_new();
@@ -71,23 +71,21 @@ void pubcrypt(char *pubKey, char *plainText, char *ciphetext)
     free(beEncrypt);
     BIO_free_all(keybio);
     RSA_free(rsa);
+
+	return ret;	//加密后的长度
 }
 
 void pricrypt(char *priKey, char *ciphetext, char *plaintext)
 {
+    BIO *keybio = BIO_new_mem_buf(priKey, strlen(priKey));
     RSA *rsa = RSA_new();
-    BIO *keybio;
-    keybio = BIO_new_mem_buf(priKey, -1);
-
-    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
-
-    //printf("ljai 1");
+    PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
 
     int len = RSA_size(rsa);
     char *beDecrypt = (char *)malloc(len + 1);
     memset(beDecrypt, 0, len + 1);
 
-    int ret = RSA_private_decrypt(strlen(ciphetext), (unsigned char*)ciphetext,
+    int ret = RSA_private_decrypt(len, (unsigned char*)ciphetext,
                                   (unsigned char*)beDecrypt, rsa,
                                   RSA_PKCS1_PADDING);
     memcpy(plaintext, beDecrypt, ret);
@@ -102,7 +100,7 @@ void getMD5(char *plainText, char *out)
     MD5((unsigned char *)plainText, strlen(plainText), (unsigned char *)out);
 }
 
-void aesCrypt(char *plainText, char *ciphetext, char *key)
+int aesCrypt(char *plainText, char *ciphetext, char *key)
 {
     AES_KEY aes;
 
@@ -119,14 +117,17 @@ void aesCrypt(char *plainText, char *ciphetext, char *key)
         ciphetext += AES_BLOCK_SIZE;
         encryptLen += AES_BLOCK_SIZE;
     }
+	return encryptLen;
 }
 
-void aesDecrypt(char *ciphetext, char *plaintext, char *key)
+int aesDecrypt(char *ciphetext, char *plaintext, char *key, int ciphelen)
 {
     AES_KEY aes;
     AES_set_decrypt_key((unsigned char *)key, 128, &aes);
 
-    int ciphetextLen = strlen(ciphetext);
+//  int ciphetextLen = strlen(ciphetext);
+    int ciphetextLen = ciphelen;
+//	printf("miwen len aes = %d\n", ciphetextLen);
     int decryptLen = 0; //已经加密的长度
 
     while(decryptLen < ciphetextLen)
@@ -136,4 +137,75 @@ void aesDecrypt(char *ciphetext, char *plaintext, char *key)
         ciphetext += AES_BLOCK_SIZE;
         decryptLen += AES_BLOCK_SIZE;
     }
+
+	return decryptLen;
 }
+
+//base64解码
+int base64_decode_help(char *in_str, int in_len, char *out_str)
+{
+    BIO *b64, *bio;
+    int size = 0;
+ 
+    if (in_str == NULL || out_str == NULL)
+        return -1;
+ 
+    b64 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+ 
+    bio = BIO_new_mem_buf(in_str, in_len);
+    bio = BIO_push(b64, bio);
+ 
+    size = BIO_read(bio, out_str, in_len);
+    out_str[size] = '\0';
+ 
+    BIO_free_all(bio);
+    return size;
+}
+
+int base64_decode(char *in_str, int in_len, char *out_str)
+{
+	//由于不了解openssl库的实现原理，所以根据自己的测试发现，解码只能一次从65字节解码出48字节
+	char *in = in_str, *out = out_str;
+	int len = in_len, i = 0, ret = 0;
+
+	while (len > 0) {
+		if (len > 65) {
+			ret += base64_decode_help(in + i * 65, 65, out + i * 48);
+		}
+		else {
+			ret += base64_decode_help(in + i * 65, in_len - i * 65, out + i * 48);
+		}
+		i++;	//每次执行 in向后偏移 65×i 字节，out 48×i 字节
+		len -= 65;				//每执行一次少65字节
+	}
+
+	return ret;
+}
+
+//base64编码
+int base64_encode(char *in_str, int in_len, char *out_str)
+{
+    BIO *b64, *bio;
+    BUF_MEM *bptr = NULL;
+    size_t size = 0;
+ 
+    if (in_str == NULL || out_str == NULL)
+        return -1;
+ 
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_new(BIO_s_mem());
+    bio = BIO_push(b64, bio);
+ 
+    BIO_write(bio, in_str, in_len);
+    BIO_flush(bio);
+ 
+    BIO_get_mem_ptr(bio, &bptr);
+    memcpy(out_str, bptr->data, bptr->length);
+    out_str[bptr->length] = '\0';
+    size = bptr->length;
+ 
+    BIO_free_all(bio);
+    return size;
+}
+

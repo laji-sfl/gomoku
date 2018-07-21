@@ -3,6 +3,11 @@
 /*
  *   加密模块的接口
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -24,18 +29,29 @@ void createRSAkey();
 void readRSAKey(char *str, char **pubkey);
 
 //用公钥加密
-void pubcrypt(char *pubKey, char *plainText, char *ciphetext);
+int pubcrypt(char *pubKey, char *plainText, char *ciphetext);
 
 //用私钥解密
-void pricrypt(char *priKey, char *ciphetext, char *plaintext);
+void pricrypt(char *priKey, char *ciphetext, char *plaintext );
 
 //获取md5信息
 void getMD5(char *plainText, char *out);
 
 //aes加密
-void aesCrypt(char *plainText, char *ciphetext, char *key);
+int aesCrypt(char *plainText, char *ciphetext, char *key);
 
 //aes解密
-void aesDecrypt(char *ciphetext, char *plaintext, char *key);
+int aesDecrypt(char *ciphetext, char *plaintext, char *key, int ciphelen);
+
+//base64编码
+int base64_encode(char *in_str, int in_len, char *out_str);
+
+//base64解码
+int base64_decode(char *in_str, int in_len, char *out_str);
+int base64_decode_help(char *in_str, int in_len, char *out_str);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SDD_H

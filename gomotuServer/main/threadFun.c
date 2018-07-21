@@ -29,6 +29,7 @@ void readFd(int fd, char **msg, int epollfd)
 {
 	int len = 0;	//读取的长度
 	char tmp[BUFSIZE] = {0};
+	char beDecode[BUFSIZE] = {0};
 
 	//传出msg的内存区域指针
 	char *buf = (char *)malloc(BUFSIZE);	//直接分配1024个字节，不去节省内存了（这个之后再说）
@@ -61,19 +62,22 @@ void readFd(int fd, char **msg, int epollfd)
 			break;
 		}
 		else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完1024字节应该没有问题
-			printf("len>0时: fd=%d,len=%d\nmsg=%s\n", fd, len, buf);
+//			printf("len>0时: fd=%d,len=%d\nmsg=%s\n", fd, len, buf);
 			strcat(tmp, buf);
+//			memcpy(tmp, buf, BUFSIZE);	
 			memset(buf, 0, BUFSIZE);
 		}
 	}
+
     //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密,第一个字节不加密，CD不加密
-	if (tmp[0] != 'C' && tmp[0] != 'D') {
-		aesDecrypt(tmp+1, buf, myaes_Key);
-		memcpy(*msg, buf, BUFSIZE);
+	if (tmp[0] != 'C' && tmp[0] != 'D' && tmp[0] != '\0') {
+		len = base64_decode(tmp+1, strlen(tmp)-1, beDecode);	//对密文解码
+		aesDecrypt(beDecode, buf+1, myaes_Key, len);			//对密文解密
+		buf[0] = tmp[0];								//将解密后的字符串拼接
 	}
 	else memcpy(*msg, tmp, BUFSIZE);
 
-//	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, len, *msg);	//看看最终的信息有没有读错
+	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
 }
 
 //分析数据报并且调用相应的函数
@@ -153,6 +157,7 @@ void login(int fd, char* msg)
 	char *img_dir = NULL;	//图片的目录
     char nameOut[17] = {0};
     char pwdOut[17] = {0};
+	char b64Name[17*2] = {0}, b64Pwd[17*2] = {0};
 
 	getNamePwd(msg, nameBuf, pwdBuf);
 
@@ -161,8 +166,10 @@ void login(int fd, char* msg)
 
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
+	base64_encode(nameOut, 16, b64Name);
+	base64_encode(pwdOut, 16, b64Pwd);
 
-    char yesOrNo = isRegister(nameOut, pwdOut, &img_dir);//读取图片路径
+    char yesOrNo = isRegister(b64Name, b64Pwd, &img_dir);//读取图片路径
 
 	/*TODO:暂时不读取图片也不将图片发送给客户端*/
 
@@ -239,6 +246,7 @@ void registerCount(int fd, char *msg)
     char pwdBuf[17] = {0};
     char nameOut[17] = {0};
     char pwdOut[17] = {0};
+	char b64Name[17*2] = {0}, b64Pwd[17*2] = {0};
 
 	getNamePwd(msg, nameBuf, pwdBuf);
 
@@ -248,9 +256,11 @@ void registerCount(int fd, char *msg)
     //数据库中密码存储MD5信息，不存明文
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
+	base64_encode(nameOut, 16, b64Name);
+	base64_encode(pwdOut, 16, b64Pwd);
 
     //存储进数据库
-    ret = saveNameToMysql(nameOut, pwdOut, "./girl.jpg"); //默认一个
+    ret = saveNameToMysql(b64Name, b64Pwd, "./girl.jpg"); //默认一个
     if(ret == '0') {
         write(fd, "31", 2);
     } 
@@ -335,15 +345,18 @@ void updateMsg(int fd, char *msg)
     char nameBuf[17] = {0}, pwdBuf[17] = {0};
     char nameOut[17] = {0}, pwdOut[17] = {0};
     char *tmp = msg, yesOrNo = '1';
+	char b64Name[17*2] = {0}, b64Pwd[17*2] = {0};
 
     //将name和pwd读取出来
 	getNamePwd(msg, nameBuf, pwdBuf);
 
     getMD5(nameBuf, nameOut);
     getMD5(pwdBuf, pwdOut);
+	base64_encode(nameOut, 16, b64Name);
+	base64_encode(pwdOut, 16, b64Pwd);
 
     //更新
-    yesOrNo = updateUserMsg(nameOut, pwdOut, NULL);
+    yesOrNo = updateUserMsg(b64Name, b64Pwd, NULL);
     //yesOrNo = updateUserMsg(nameBuf, pwdBuf, NULL);
 
     if(yesOrNo == '1')
@@ -357,15 +370,17 @@ void updateImg(int fd, char *msg)
     char imgPwd[100] = {0};        //图片路径
 	char nameBuf[17] = {0}, nameOut[17] = {0};
     char yesOrNo = '1';
+	char b64Name[17*2] = {0};
 
 	//提取name
 	getNamePwd(msg, nameBuf, NULL);
 
     sprintf(imgPwd, "/home/sfl/download/%s", nameBuf);	//拼接图片的存储路径
 	getMD5(nameBuf, nameOut);
+	base64_encode(nameOut, 16, b64Name);
 
     //更新
-    yesOrNo = updateUserMsg(nameOut, NULL, imgPwd);
+    yesOrNo = updateUserMsg(b64Name, NULL, imgPwd);
     //yesOrNo = updateUserMsg(nameBuf, NULL, imgPwd);
 
     if(yesOrNo == '1')
@@ -380,12 +395,18 @@ void changeKey(int fd, char *msg)
     //接收客户端的公钥,加密AES秘钥,将加密后的AES秘钥发送给客户端
     char cipherBuf[BUFSIZE] = {0};//加密后的秘钥
 	char msgBuf[BUFSIZE] = {0};//发送给客户的数据报
+	char beEncode[BUFSIZE] = {0};//编码之后
+	int ret = 0;
 	strcpy(msgBuf, msg+1);
 
-    pubcrypt(msgBuf, myaes_Key, cipherBuf); 
+    ret = pubcrypt(msgBuf, myaes_Key, cipherBuf); 
+//	printf("pub ret = %d\n", ret);
+	base64_encode(cipherBuf, ret, beEncode);
+//	printf("encode:%d\n%s\n", strlen(beEncode)+1, beEncode);
+
 	memset(msgBuf, 0, BUFSIZE);
 	msgBuf[0] = 'D';	//D表示收到的是AES秘钥
-	strcat(msgBuf, cipherBuf);
+	strcat(msgBuf, beEncode);
 
     write(fd, msgBuf, strlen(msgBuf));   
 }

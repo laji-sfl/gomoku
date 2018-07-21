@@ -27,6 +27,7 @@ public:
     char stonePos[15][15];
     QString myName, heName;
     QList<step*> *stepList;
+    char *aes_key;
 };
 
 #endif // GAMEDATA_H

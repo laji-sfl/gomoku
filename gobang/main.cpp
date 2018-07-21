@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     delete cho;   //不能释放需要让重新选择
 
     //游戏的主窗体
-    MainWnd wnd(num,playNameG);/* 不理解：为什么创建一个类对象，对象构造过程中，
+    MainWnd wnd(num,playNameG, aesKey);/* 不理解：为什么创建一个类对象，对象构造过程中，
                      *        又创建了一个对象，但是执行的show函数，
                      *        是从QWidget继承来的，没有把子类对象传递给
                      *        父类指针，构不成多态啊。

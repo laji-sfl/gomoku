@@ -5,29 +5,44 @@
 
 int main(void)
 {
-	char buf[2048]  = "hello";
-	char tmp[2048]  = {0};
-	char jjj[2048] = {0};
-	jjj[0] = '1';
-	char plain[2048]  = {0};
-	char *msg = NULL;
-	char *key = NULL;
+	char jiamiqian[2048]  = "laji000000000000laji000000000000";
+	char myaes_Key[16] = "4Dskdj3241DEAe4";
+	char miwen[2048]  = {0};
+	char jiemihou[2048]  = {0};
+	char bianmahou[2048] = {0};
+	char jiemahou[2048] = {0};
+	char *buf;
+//	char *pubkey = NULL;
+//	char *prikey = NULL;
+	int ret = 0 ;
 
-	createRSAkey();
+//	createRSAkey();
+//	readRSAKey("./pub_str_key", &pubkey);
+//	ret = pubcrypt(pubkey, jiamiqian, miwen);
 
-	readRSAKey("./pub_str_key", &key);
-	printf("pub len %d\n", strlen(key));
+//	base64_encode(miwen, ret, bianmahou);
 
-	pubcrypt(key, buf, tmp);
+//	readRSAKey("./pri_str_key", &prikey);
+//	base64_decode(bianmahou, strlen(bianmahou), jiemahou);
 
-	readRSAKey("./pri_str_key", &msg);
-	printf("pri len %d\n", strlen(msg));
+//	pricrypt(prikey, jiemahou, jiemihou );
 
-	//pricrypt(msg, jjj+1, plain);
-	pricrypt(msg, tmp, plain);
+	//输出解密后的明文
+//	printf("\nmingwen:%s\n", jiemihou);
 
-	printf("\n%s\n", plain);
+//	free(pubkey);
+//	free(prikey);
 
+	ret = aesCrypt(jiamiqian, miwen, myaes_Key);
+	printf("len = %d, strlen = %d\n", ret, strlen(miwen));
+	printf("base ret = %d\n",base64_encode(miwen, ret, bianmahou));
+//	aesDecrypt(miwen, jiemihou, "1234qwer");
+//	printf("mingwen:%s\n", jiemihou);
+
+	buf = (char *)malloc(2048);
+	ret = base64_decode(bianmahou, strlen(bianmahou), jiemahou);	
+	printf("aes len = %d\n",aesDecrypt(jiemahou, buf+1, myaes_Key, ret));			//对密文解密
+	printf("buf = %s\n", buf+1);
 
 	return 0;
 }

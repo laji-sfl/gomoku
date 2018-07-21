@@ -10,6 +10,7 @@ GameData::GameData()
             this->stonePos[i][j] = '0';
         }
     }
+    aes_key = NULL;
 }
 
 

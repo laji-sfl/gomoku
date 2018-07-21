@@ -43,7 +43,9 @@ void Login::printErr()
 void Login::readSock()
 {
     QByteArray str = socket->readAll();
-    qDebug() << str << endl;    //打印出接收的所有消息
+    int strlens = str.length();
+    qDebug() << str << strlens;
+
     if(str.at(0) == '1')
     {
         if(str.at(1) == '1')
@@ -81,22 +83,23 @@ void Login::readSock()
         msg.append(key);
         socket->write(msg);
         free(key);
-        qDebug() << "recv pub key and send my pub key" << endl;
     }
     else if(str.at(0) == 'D')
     {
         //接收aes秘钥并保存起来
         char *key;  //RSA秘钥
+        char beDecode[2048] = {0};//解码后
+        char cipherText[2048] = {0};//接收到的密文
+        char *p = cipherText;       //操作密文的指针
         char file[20] = "./pri_str_key";
-        memset(AESkey, 0, 1024);
 
-        //str.remove(0, 1);   //将开头的D去掉
-        char *cipherText = const_cast<char *>(str.toStdString().c_str());//密文
+        memcpy(cipherText, str.toStdString().c_str(), strlens);//密文
+        base64_decode(p+1, strlens-1, beDecode);//密文解码
         readRSAKey(file, &key);//读取私钥
-        pricrypt(key, cipherText+1, AESkey);//解密
+        pricrypt(key, beDecode, AESkey);//解密,加1是为了取出前面的D
+        qDebug() << "AES KEY:" << AESkey;
         free(key);
         recvAESkey = true;
-        qDebug() << "recv aes key:" << AESkey << endl;
     }
     else
     {
@@ -141,14 +144,19 @@ void Login::inClicked()
     str.append(strPwd);
     for (int i = 0;i < 16 - strName.length(); ++i)
         str.append('0');
+
     //加密
     char cipher[1024] = {0};
-    aesCrypt(const_cast<char*>(str.toStdString().c_str()), cipher,AESkey);
+    char plain[1024] = {0};
+    memcpy(plain, str.toStdString().c_str(), str.length());
 
-    QByteArray msg;
-    msg.append('1');
-    msg.append(cipher);
-    socket->write(msg);
+    int ret = aesCrypt(plain, cipher, AESkey);
+    memset(plain, 0, 1024);
+    base64_encode(cipher, ret, plain + 1);
+
+    plain[0] = '1';
+    qDebug() << "plain:" << plain;
+    socket->write(plain);
 }
 
 //槽函数注册
@@ -179,14 +187,19 @@ void Login::onClicked()
     str.append(strPwd);
     for (int i = 0;i < 16 - strName.length(); ++i)
         str.append('0');
+
     //加密
     char cipher[1024] = {0};
-    aesCrypt(const_cast<char*>(str.toStdString().c_str()), cipher,AESkey);
+    char plain[1024] = {0};
+    memcpy(plain, str.toStdString().c_str(), str.length());
 
-    QByteArray msg;
-    msg.append('3');
-    msg.append(cipher);
-    socket->write(msg);
+    int ret = aesCrypt(plain, cipher, AESkey);
+    memset(plain, 0, 1024);
+    base64_encode(cipher, ret, plain + 1);
+
+    plain[0] = '3';
+    qDebug() << "plain:" << plain;
+    socket->write(plain);
 }
 
 //设置控件

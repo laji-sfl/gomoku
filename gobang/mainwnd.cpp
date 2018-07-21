@@ -5,7 +5,7 @@
 #include <QHBoxLayout>
 #include <QDebug>
 
-MainWnd::MainWnd(char num,QString name, QWidget *parent) : QWidget(parent)
+MainWnd::MainWnd(char num,QString name, char *aesKey, QWidget *parent) : QWidget(parent)
 {
     if(num == '1')
     {
@@ -17,6 +17,7 @@ MainWnd::MainWnd(char num,QString name, QWidget *parent) : QWidget(parent)
     {
         NetWorkPlay *net = new NetWorkPlay(this);
         net->oneGame.myName = name;
+        net->oneGame.aes_key = aesKey;
         net->setNameg(QString("昵称：") + name);
     }
 }
