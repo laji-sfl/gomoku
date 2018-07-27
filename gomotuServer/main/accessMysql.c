@@ -175,6 +175,7 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
         return '1';
 
     MYSQL mysql;
+    MYSQL_RES *res = NULL;
     char cmd[300] = {0};
 
     if(NULL == mysql_init(&mysql)) {
@@ -200,10 +201,24 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
         printf("mysql_real_query error: %s \n", mysql_error(&mysql));
         mysql_close(&mysql);
         return '1';
+	}
+
+    if((res = mysql_store_result(&mysql)) == NULL) {
+        printf("mysql_store_result error: %s \n", mysql_error(&mysql));
+        mysql_close(&mysql);
+        return '1';
     }
-    else {
+
+    //表示成功的更新了一条数据库的记录
+    if(mysql_num_rows(res) == 1) {
+        mysql_free_result(res);
         mysql_close(&mysql);
         return '0';
+    }
+    else {
+        mysql_free_result(res);
+		mysql_close(&mysql);
+        return '1';
     }
 }
 
