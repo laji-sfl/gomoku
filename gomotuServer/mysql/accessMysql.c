@@ -175,7 +175,9 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
         return '1';
 
     MYSQL mysql;
+    MYSQL_RES *res = NULL;
     char cmd[300] = {0};
+	int affectNum = 0;
 
     if(NULL == mysql_init(&mysql)) {
         printf("mysql_init error: %s \n", mysql_error(&mysql));
@@ -200,11 +202,19 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
         printf("mysql_real_query error: %s \n", mysql_error(&mysql));
         mysql_close(&mysql);
         return '1';
-    }
-    else {
-        mysql_close(&mysql);
-        return '0';
-    }
+	}
+	
+	//根据返回的影响的行数来判断是否更新成功
+	affectNum = mysql_affected_rows(&mysql);
+//	printf("ret num = %d\n", affectNum);
+	if (affectNum == 1) {
+		mysql_close(&mysql);
+		return '0';
+	}
+	else {
+		mysql_close(&mysql);
+		return '1';
+	}
 }
 
 //返回‘0’表示合法的，否则返回‘1’,因为将数据库不在存储明文了，所以也不怕数据不合法了，都是随机的MD5值

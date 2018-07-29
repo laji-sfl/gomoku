@@ -8,35 +8,34 @@
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-    QString playNameG = QString("shilada");   //来在多个对话框之间传递
-    char aesKey[1024] = {0};
-    char num = '1';       //模式
-
-    //登录判断对话框
-    Login *lo = new Login;
-    if(lo->exec() != QDialog::Accepted)
-        return -1;
-    playNameG = lo->playername;
-    strcpy(aesKey, lo->AESkey);
-    delete lo;      //及时结束回收资源
+    QString playNameG;   //玩家的姓名
+    char aesKey[1024] = {0};    //aes秘钥
+    char playMode = '1';       //模式
 
     //选择游戏模式对话框
     ChoosePattern *cho = new ChoosePattern;
     if(cho->exec() != QDialog::Accepted)
         return -1;
-    num = cho->num;
-    delete cho;   //不能释放需要让重新选择
+    playMode = cho->num;
+    delete cho;
+
+    if(playMode == '2') //网络对战
+    {
+        //登录判断对话框
+        Login *lo = new Login;
+        if(lo->exec() != QDialog::Accepted) {
+            delete lo;
+            return -1;
+        }
+        playNameG = lo->playername;
+        strcpy(aesKey, lo->AESkey);
+        delete lo;
+    }
 
     //游戏的主窗体
-    MainWnd wnd(num,playNameG, aesKey);/* 不理解：为什么创建一个类对象，对象构造过程中，
-                     *        又创建了一个对象，但是执行的show函数，
-                     *        是从QWidget继承来的，没有把子类对象传递给
-                     *        父类指针，构不成多态啊。
-                     * 答：创建对象时传入的this指针，和构造函数中的parent
-                     *    参数，限制了他是一个控件或者一个窗口，但是内部的
-                     *    实现机制还需要再一次的了解。
-                     */
-    wnd.show();
+    MainWnd *wnd = new MainWnd(playMode, playNameG, aesKey);
+    wnd->setAttribute(Qt::WA_DeleteOnClose, true);//窗体关闭自动释放内存
+    wnd->show();
 
     return app.exec();
 }

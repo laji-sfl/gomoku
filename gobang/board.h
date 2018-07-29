@@ -27,7 +27,7 @@ class Board : public QFrame
     Q_OBJECT
 public:
     explicit Board(QWidget *parent = 0);    //构造函数
-    ~Board();   //析构函数
+    virtual ~Board();   //析构函数
 
     //绘制事件
     void paintEvent(QPaintEvent *);
@@ -71,7 +71,9 @@ public slots:
     //当时间为0
     virtual void dealTime0();
     //重新选择
-    void recvChoose();
+    virtual void recvChoose();
+    //显示帮助
+    virtual void showHelp();
 
 //自定义信号
 signals:
@@ -86,12 +88,14 @@ public:
     QPushButton *pullBack;//后悔键
     QPushButton *startGame; //开始游戏
     QPushButton *reChoose;  //重新选择
+    QPushButton *openHelp;      //打开帮助信息
     QLabel *gtime;   //计时器
     QLabel *gname;   //昵称
     QLabel *gpicture;//头像
     QLabel *rtime;
     QLabel *rname;
     QLabel *rpicture;
+    QLabel *helpInfo;   //帮助信息
     QTimer *timer;  //计时器是类的属性，在子类中也可以捕捉时间信号
     int gameTime;   //每一个人的固定思考时间
 };

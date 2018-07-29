@@ -7,10 +7,25 @@
 
 humanComputePlay::humanComputePlay(QWidget *parent) : Board(parent)
 {
+    this->autoBrain = new Brain;
+
+    this->degreeNum = new QLineEdit(this);
+    this->degreeNum->move(90,0);
+    this->degreeNum->setMaximumWidth(30);
+    this->changeDegree = new QPushButton("修改难度", this);
+    this->changeDegree->move(120, 0);
+    connect(this->changeDegree, SIGNAL(clicked(bool)), this, SLOT(changDegree()));
+
     flagWho = true;
     flagStart = false;
+    oneGame.myName = QString("最帅的我");
     setButtonLabel();
     connect(this,SIGNAL(sendCompute()),this,SLOT(recvCompute()));
+}
+
+humanComputePlay::~humanComputePlay()
+{
+    delete autoBrain;
 }
 
 //设置悔棋按钮和标签
@@ -120,6 +135,15 @@ void humanComputePlay::recvCompute()
     computeMove();
 }
 
+void humanComputePlay::changDegree()
+{
+    if (flagStart)
+        return;
+    QString num = this->degreeNum->text();
+    this->autoBrain->setDegree(num.toInt());
+    this->degreeNum->clear();
+}
+
 void humanComputePlay::gameOver()
 {
     delete this->timer;
@@ -132,7 +156,6 @@ void humanComputePlay::gameOver()
     {
         delete (*tmp);  //释放 step*
     }
-    qDebug() << "len:" << oneGame.stepList->length();
     oneGame.stepList->clear();
 
     QMessageBox::warning(this,"gameOver","gameOver laji!!!",QMessageBox::Yes,QMessageBox::Yes);
@@ -143,15 +166,7 @@ void humanComputePlay::computeMove()
 {
     //计算出最佳的坐标
     int x = 0, y = 0;
-    QTime t = QTime::currentTime();
-    qsrand(t.second() * 1000 + t.msec());
-
-    //test
-    while(oneGame.stonePos[x][y] != '0')
-    {
-        x = qrand() % 14;
-        y = qrand() % 14;
-    }
+    this->autoBrain->autoMove(x, y);
 
     //更换玩家
     setTimeg(QString("time:1:30"));

@@ -7,6 +7,8 @@
 
 MainWnd::MainWnd(char num,QString name, char *aesKey, QWidget *parent) : QWidget(parent)
 {
+    setMaximumSize(660, 530);
+
     if(num == '1')
     {
       humanComputePlay *hum = new humanComputePlay(this);
@@ -20,5 +22,10 @@ MainWnd::MainWnd(char num,QString name, char *aesKey, QWidget *parent) : QWidget
         net->oneGame.aes_key = aesKey;
         net->setNameg(QString("昵称：") + name);
     }
+}
+
+MainWnd::~MainWnd()
+{
+
 }
 

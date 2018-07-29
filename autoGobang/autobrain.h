@@ -51,6 +51,7 @@ struct Pos
 
 class AutoBrain
 {
+    Q_OBJECT
 public:
     AutoBrain();
     ~AutoBrain();

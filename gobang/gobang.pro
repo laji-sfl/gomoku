@@ -9,7 +9,10 @@ SOURCES += \
     choosepattern.cpp \
     mainwnd.cpp \
     humancomputeplay.cpp \
-    encryption.c
+    encryption.c \
+    changperinfo.cpp \
+    brain.cpp
+    autobrain.cpp \
 
 HEADERS += \
     board.h \
@@ -19,7 +22,9 @@ HEADERS += \
     choosepattern.h \
     mainwnd.h \
     humancomputeplay.h \
-    encryption.h
+    encryption.h \
+    changperinfo.h \
+    brain.h
 
 LIBS += -lcrypto
 

@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QPicture>
 #include <QColor>
+#include <QFile>
 #include <QBrush>
 #include <QDebug>   //测试数据
 #include "gamedata.h"
@@ -30,11 +31,37 @@ Board::Board(QWidget *parent) : QFrame(parent)
      * 是设计的不对吗？将父类指针传入是否就可以实现多态
      */
     setStartButton();
-    this->reChoose = new QPushButton("重新选择模式",this);
+
+    /*
+     *  按钮的位置和窗体的大小不应该设置为固定的数值，应该用布局的功能进行灵活的变化。
+     *  由于不熟悉qt的类库函数，暂时以实现目的为目标，不去管其他的事情。
+     */
+    this->reChoose = new QPushButton("断开连接",this);
+    this->reChoose->move(0, 0);
     connect(this->reChoose, SIGNAL(clicked(bool)),this,SLOT(recvChoose()));
+
+    this->openHelp = new QPushButton("帮助", this);
+    this->openHelp->move(235, 0);
+    connect(this->openHelp, SIGNAL(clicked(bool)), this, SLOT(showHelp()));
 
     //自定义的信号和槽，时间为0
     connect(this,SIGNAL(timeEqual0()),this,SLOT(dealTime0()));
+}
+
+void Board::showHelp()
+{
+    /*
+     *  读取帮助文件，显示帮助信息
+     */
+    QFile file("./help.info");
+    file.open(QIODevice::ReadOnly);
+    QByteArray str = file.readAll();
+    file.close();
+
+    /*是否会泄露内存，点击叉是否会自动delete，如何捕捉点击叉的信号*/
+    this->helpInfo = new QLabel(QString(str));
+    this->helpInfo->setAttribute(Qt::WA_DeleteOnClose, true);//窗体退出时，自动释放内存
+    this->helpInfo->show();
 }
 
 void Board::recvChoose()

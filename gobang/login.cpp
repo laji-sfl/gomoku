@@ -142,7 +142,7 @@ void Login::inClicked()
     for (int i = 0;i < 16 - strName.length(); ++i)
         str.append('0');
     str.append(strPwd);
-    for (int i = 0;i < 16 - strName.length(); ++i)
+    for (int i = 0;i < 16 - strPwd.length(); ++i)
         str.append('0');
 
     //加密
@@ -185,7 +185,7 @@ void Login::onClicked()
     for (int i = 0;i < 16 - strName.length(); ++i)
         str.append('0');
     str.append(strPwd);
-    for (int i = 0;i < 16 - strName.length(); ++i)
+    for (int i = 0;i < 16 - strPwd.length(); ++i)
         str.append('0');
 
     //加密
@@ -212,6 +212,11 @@ void Login::setWidget()
     this->pwdLabel = new QLabel(QString("password:"));
     this->name = new QLineEdit();
     this->pwd = new QLineEdit();
+
+    //test:
+    this->name->setText(QString("laji"));
+    this->pwd->setText(QString("laji"));
+
     pwd->setEchoMode(QLineEdit::Password);
     this->sign_in = new QPushButton(QString("登录"));
     this->sign_on = new QPushButton(QString("注册"));
