@@ -5,6 +5,12 @@
 #include <deque>
 #include <iostream>
 
+/*
+ * bug:
+ *      不能调整难度，不然会乱下
+ *      不会走五个子，因为define没有定义五个子的情况
+ */
+
 #define TWO0    200
 #define TWO1    100
 #define TWO2    20
@@ -48,6 +54,9 @@ public:
     void canMovePos();
     void setPos(int x, int y);
     void clearThree();
+
+    //test:
+//    void printList();
 
     void setValue();
 

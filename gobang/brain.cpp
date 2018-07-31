@@ -24,6 +24,8 @@ void Brain::autoMove(int &x, int &y)
 
     getBestPos(x, y);
     chess[x][y] = '2';
+
+    posSet.clear();//每次计算之后都要清空链表
 }
 
 void Brain::getBestPos(int &x, int &y)
@@ -131,6 +133,14 @@ void Brain::clearThree()
         }
     }
 }
+
+//void Brain::printList()
+//{
+//    for(const auto &tmp : this->posSet)
+//    {
+//        std::cout << tmp.x_axis << ":" << tmp.y_axis << "=" << tmp.value << std::endl;
+//    }
+//}
 
 //评估此时的棋盘分数，并写入链表
 void Brain::setValue()
