@@ -61,7 +61,6 @@ public:
     void setScore(int &score, int x, int y, std::deque<char> &pattern);
     void switchPattern(int &score_1, int &score_2, int x, int y, std::deque<char> &pattern);
 
-//私有的数据结构
 public:
     char chess[15][15];
     std::list<Pos> posSet;

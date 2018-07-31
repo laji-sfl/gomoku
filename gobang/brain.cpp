@@ -54,7 +54,6 @@ void Brain::setPos(int x, int y)
     //竖线
     for(int i = 1;i <= degree; ++i)
     {
-        //如果棋盘上是空的，并且这个子没有超出棋盘范围，那么就可以走
         if(chess[x-i][y] == '0' && x-i >= 0)
         {
             Pos tmp{x-i,y,0};

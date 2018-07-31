@@ -13,7 +13,7 @@ public:
     explicit humanComputePlay(QWidget *parent = 0);
     ~humanComputePlay();
 
-    void setButtonLabel();
+//    void setButtonLabel();
     //机器走子
     void computeMove();
     void mouseReleaseEvent(QMouseEvent *ev);

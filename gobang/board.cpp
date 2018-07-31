@@ -160,7 +160,7 @@ void Board::setButtonLabel()
     rtime = new QLabel(this);
     rpicture = new QLabel(this);
     rname = new QLabel(this);
-    this->setNameg(QString("la ji"));
+    this->setNameg(QString("昵称：最帅的我"));
     this->setPictureg(QString("kk"));
     this->setTimeg(QString("shi jian"));
     this->setNamer(QString("la ji"));
@@ -171,9 +171,9 @@ void Board::setButtonLabel()
 //设置label
 void Board::setNameg(QString str)
 {
-    this->gname->setText(str);
-    this->gname->setMinimumSize(90,20);
     this->gname->move(500, 145);    //这些数字位置都是根据实际情况调整的
+    this->gname->setMinimumSize(100,20);
+    this->gname->setText(str);
 }
 void Board::setPictureg(QString )
 {

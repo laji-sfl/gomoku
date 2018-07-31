@@ -18,40 +18,18 @@ humanComputePlay::humanComputePlay(QWidget *parent) : Board(parent)
 
     flagWho = true;
     flagStart = false;
-    oneGame.myName = QString("最帅的我");
-    setButtonLabel();
+    this->setButtonLabel();
+    //this->setNameg(QString("昵称：最帅的我"));//没有昵称？？？？
+    this->setNamer(QString("昵称：笨电脑"));
+    this->setTimer(QString("time: 0:00"));
+    this->setTimeg(QString("time: 0:00"));
+    update();
     connect(this,SIGNAL(sendCompute()),this,SLOT(recvCompute()));
 }
 
 humanComputePlay::~humanComputePlay()
 {
     delete autoBrain;
-}
-
-//设置悔棋按钮和标签
-void humanComputePlay::setButtonLabel()
-{
-    //显示悔棋按钮
-    this->pullBack = new QPushButton(this);
-    this->pullBack->setText(QString("悔棋"));
-    this->pullBack->setMinimumSize(80,40);
-    this->pullBack->move(200,480);
-    connect(pullBack,&QPushButton::clicked,this,&Board::clickedPB);
-
-    //显示自己的昵称头像和对方的昵称头像
-    gname = new QLabel(this);
-    gpicture = new QLabel(this);
-    gtime = new QLabel(this);
-    rtime = new QLabel(this);
-    rpicture = new QLabel(this);
-    rname = new QLabel(this);
-    this->setNameg(QString("昵称：") + oneGame.myName);
-    this->setPictureg(QString("kk"));
-    this->setTimeg(QString("time: 0:00"));
-    this->setNamer(QString("昵称：") + QString("电脑"));
-    this->setPicturer(QString("asd"));
-    this->setTimer(QString("time: 0:00"));
-    update();//重新绘制
 }
 
 //悔棋槽函数
@@ -96,6 +74,9 @@ void humanComputePlay::startTimerGame()
     Board::startTimerGame();
     this->gr = '1';     //玩家是1电脑是2
     flagWho = true;     //true是玩家下
+
+    this->gname->setText(QString("昵称:最帅的我"));
+    update();
 }
 
 //鼠标点击
@@ -165,7 +146,8 @@ void humanComputePlay::gameOver()
 void humanComputePlay::computeMove()
 {
     //计算出最佳的坐标
-    int x = 0, y = 0;
+    int x = oneGame.stepList->at(oneGame.stepList->length() - 1)->x;
+    int y = oneGame.stepList->at(oneGame.stepList->length() - 1)->y;
     this->autoBrain->autoMove(x, y);
 
     //更换玩家
