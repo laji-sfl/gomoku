@@ -9,12 +9,14 @@ void setFdNoBlock(int fd)
 
     //获取文件描述符标志
     if((flag = fcntl(fd, F_GETFL, 0)) == -1)
-        printf("error: fcntl get flag\n");
+//        printf("error: fcntl get flag\n");
+        set_log("error:fcntl get flag");
 
     //设置文件描述符标志
     flag |= O_NONBLOCK;
     if(fcntl(fd, F_SETFL, flag) == -1)
-        printf("error: fcntl set flag\n");
+//        printf("error: fcntl set flag\n");
+		set_log("error:fcntl set flag");
 }
 
 int CreateSocket(int port, char *ip)
@@ -90,15 +92,15 @@ void *threadFunAccept(void *arg)
 	while(1) {
 		if((confd = accept(sockfd->fd, (struct sockaddr *)&clieaddr, &clielen)) == -1) {
 			if(errno == EAGAIN || errno == EWOULDBLOCK) {
-				printf("accept EAGAIN\n");
+//				printf("accept EAGAIN\n");
 				break;
 			} else {
-				printf("error accept\n");
+//				printf("error accept\n");
 				set_log("newThreadAddToEpoll accept error");
 				break;
 			}
 		}
-		printf("将fd：%d加入监听\n", confd);
+//		printf("将fd：%d加入监听\n", confd);
 		epollAddFd(sockfd->epollfd, confd);//加入epoll监听
 
         //连接成功之后，就直接将服务器的公钥发给客户端
@@ -108,7 +110,7 @@ void *threadFunAccept(void *arg)
 
     free(sockfd);   //参数
 	//test：
-	printf("thread id:%u exit\n", (unsigned int)pthread_self());
+//	printf("thread id:%u exit\n", (unsigned int)pthread_self());
 
 	pthread_exit(NULL);
 }

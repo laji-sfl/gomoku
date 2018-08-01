@@ -41,12 +41,12 @@ void readFd(int fd, char **msg, int epollfd)
 		len = read(fd, buf, BUFSIZE);
 		if(len == -1) {
 		 	if(errno == EAGAIN) {	//读取完毕
-				printf("read over fd:%d.\n", fd);
+//				printf("read over fd:%d.\n", fd);
 				//set_log("read fd over");	//还需要将函数设置成为可接受可变参数的
 				break;
 			}
 			else {	//有错误说明连接出现了问题，就直接断开连接，取出epoll的监听
-				printf("read error:%d!\n", fd);
+//				printf("read error:%d!\n", fd);
 				set_log("read error!;");
 				
 				//清理匹配信息
@@ -55,8 +55,8 @@ void readFd(int fd, char **msg, int epollfd)
 			}
 		}
 		else if(len == 0) {	//遇到文件结尾
-			printf("len == 0; close fd: %d\n", fd);
-			set_log("close fd;");
+//			printf("len == 0; close fd: %d\n", fd);
+//			set_log("close fd;");
 			
 			cleanFd(fd, epollfd);
 			break;
@@ -77,7 +77,7 @@ void readFd(int fd, char **msg, int epollfd)
 	}
 	else memcpy(*msg, tmp, BUFSIZE);
 
-	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
+//	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
 }
 
 //分析数据报并且调用相应的函数
@@ -116,7 +116,8 @@ void analyzeMsg(char *msg, int fd)
 		updateMsg(fd, msg);
 		break;
 	default:
-		printf("format illegal, please see dataType.h\n");
+//		printf("format illegal, please see dataType.h\n");
+		set_log("format illegal");
 		break;
 	}
 
@@ -222,17 +223,17 @@ void startMatch(int fd, char* msg)
 		write(beDel->fd, bufTmp, strlen(bufTmp));
 		free(beDel);					//释放从等待队列取出来的节点
 		free(newWait);					//因为匹配成功了，所以不存在新的等待节点
-		printf("new player matched\n");
-		set_log("new player matched");
+//		printf("new player matched\n");
+//		set_log("new player matched");
 	}
 	else if (yesOrNo == '0') { 			//匹配不成功
 		free(newGame);					//因为匹配失败，所以不存在新的游戏节点
-		printf("new player startMatch\n");
-		set_log("new player wait match");
+//		printf("new player startMatch\n");
+//		set_log("new player wait match");
 		write(fd, "201", 3);			//没有匹配成功
 	}
 	else {
-		printf("error in startMatch");
+//		printf("error in startMatch");
 		set_log("error in startMatch");
 	}
 }
@@ -266,7 +267,7 @@ void registerCount(int fd, char *msg)
     } 
 	else if (ret == '1' || ret == '2') {
         write(fd, "30", 2);
-        printf("fd=%d,注册失败\n", fd);
+//        printf("fd=%d,注册失败\n", fd);
         set_log("注册失败。registerCount");
     }
 }

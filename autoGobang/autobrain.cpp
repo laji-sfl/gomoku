@@ -31,6 +31,8 @@ void AutoBrain::autoMove(int &x, int &y)
 
     getBestPos(x, y);   //计算出最佳的位置，并返回
     chess[x][y] = '2';
+
+	posSet.clear();
 }
 
 //sort函数内部提示没有匹配减号，可能是因为全局的sort没有对list迭代器进行重载-

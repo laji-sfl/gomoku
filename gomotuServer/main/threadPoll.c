@@ -29,7 +29,7 @@ char initThreadPoll(int threadNum, struct ThPoll **thPoll)
     //创建threadNum个线程
     for(i = 0;i < threadNum; ++i) {
         pthread_create(&tid, &tattr, threadFun, *thPoll);
-		printf("threadNum%d: %u , ", i, (unsigned int)tid);
+//		printf("threadNum%d: %u , ", i, (unsigned int)tid);
     }
 	printf("\n");
 
@@ -41,7 +41,7 @@ char addTaskToList(int fd, int epollfd, struct ThPoll *thPoll)
 {
     //线程池被销毁了，就不允许添加任务
     if(thPoll->isEnd == '0') {
-        printf("线程已被销毁\n");
+//        printf("线程已被销毁\n");
 		set_log("thread poll addTaskToList 线程池已被销毁");
         return '1';
     }
@@ -93,7 +93,7 @@ void *threadFun(void *arg)
         pthread_mutex_unlock(&thpoll->thmutext);
 
         //执行任务
-		printf("开始执行任务thread id:%u \n", (unsigned int)pthread_self());
+//		printf("开始执行任务thread id:%u \n", (unsigned int)pthread_self());
         if(current != NULL)
             /*运行任务处理函数*/
 			threadCall(current);
@@ -102,7 +102,7 @@ void *threadFun(void *arg)
     }
 
     //退出线程
-	printf("线程退出\n");
+//	printf("线程退出\n");
     pthread_exit(NULL);
 }
 
