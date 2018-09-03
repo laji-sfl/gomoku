@@ -26,10 +26,6 @@ Board::Board(QWidget *parent) : QFrame(parent)
     //初始化游戏数据步骤链表
     oneGame.stepList = new QList<step*>;
 
-    /*
-     * 父类构造函数执行了，和子类构造函数冲突了怎么办
-     * 是设计的不对吗？将父类指针传入是否就可以实现多态
-     */
     setStartButton();
 
     /*

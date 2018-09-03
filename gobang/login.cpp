@@ -28,10 +28,6 @@ Login::Login(QWidget *parent) : QDialog(parent)
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(printErr()));
 }
 
-/*
- * 结束程序，需要了解，执行close的原理是否会释放内存，是否结束程序，是否向下执行
- *   这里不懂原理，需不需要释放这个对话框的资源，还是会自动释放。
- */
 //tcp连接出现的问题他都会弹出
 void Login::printErr()
 {
