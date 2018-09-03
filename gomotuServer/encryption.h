@@ -5,7 +5,7 @@
  */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" {		//由于客户端由c++编写，调用c程序需要这个
 #endif
 
 #include <stdio.h>

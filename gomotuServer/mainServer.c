@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
     //判断命令行参数
     if(argc != 3) {
         printf("请输入IP和端口\n");
-		set_log("请输入IP和端口");
         return -1;
     }
 
@@ -26,7 +25,7 @@ int main(int argc, char *argv[])
     createRSAkey();
 
     //创建全局的AES秘钥，如果要将每一个连接都创建不同的秘钥的话，就需要添加新的数据结构去保存fd与秘钥的对应关系，或者在数据库中保存fd对应的完整信息，这版本就简单的做了。
-    //extern char aes_key[16] = {0};    //测试如何在多文件中使用全局变量
+    //extern char aes_key[16] = {0};   
 
     //创建套接字
     if((sockfd = CreateSocket(atoi(argv[2]), argv[1])) == -1) {
@@ -63,9 +62,6 @@ int main(int argc, char *argv[])
 
         //timeout网上都是将其置为-1，但是man手册说未定义
         retNum = epoll_wait(epollFd, event_ptr, EVENTNUM, -1);
-
-		//test
-	//	printf("\n\nepoll wait retNum: %d.\n", retNum);
 
         //循环的处理每一个响应的文件描述符
         for(i = 0;i < retNum; ++i) {

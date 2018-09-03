@@ -13,10 +13,6 @@ char isRegister(char *name, char *pwd, char **img_dir)
 {
     if(name == NULL || pwd == NULL || img_dir == NULL)
         return '1';
-    //防止sql的注入攻击（只知道这个。。。）
-//    if('0' != isLegal(name)) {
-//        return '1';
-//    }
 
     MYSQL mysql;
     MYSQL_RES *res = NULL;  //返回的结果集的指针
@@ -72,7 +68,6 @@ char isRegister(char *name, char *pwd, char **img_dir)
     {
         row = mysql_fetch_row(res);//将结果的一行取出
         sprintf(cmd, "%s", row[1]);//将密码暂时存储起来
-//        printf("pwd: %s \n", row[1]);
 
         if(strcmp(cmd, pwd) == 0) {
             sprintf(cmd, "%s", row[2]); //将文件的目录名传出
@@ -88,14 +83,6 @@ char isRegister(char *name, char *pwd, char **img_dir)
             return '3';    //密码错误
         }
     }
-
-    //读取存储的信息
-//    while (row = mysql_fetch_row(res)) {    //获取一行数据
-//        for(int i = 0;i < fieldNum; ++i) {  //打印一行中的各列数据
-//            printf("%s\t", row[i]);
-//        }
-//        printf("\n");
-//    }
 }
 
 
@@ -105,9 +92,6 @@ char saveNameToMysql(char *name, char *pwd, char *img_dir)
 {
     if(name == NULL || pwd == NULL || img_dir == NULL)
         return '1';
-//    if('0' != isLegal(name)) {
-//        return '1';
-//    }
 
     MYSQL mysql;
     MYSQL_RES *res = NULL;
@@ -206,7 +190,6 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
 	
 	//根据返回的影响的行数来判断是否更新成功
 	affectNum = mysql_affected_rows(&mysql);
-//	printf("ret num = %d\n", affectNum);
 	if (affectNum == 1) {
 		mysql_close(&mysql);
 		return '0';
@@ -218,15 +201,15 @@ char updateUserMsg(char *name, char *pwd, char *img_dir)
 }
 
 //返回‘0’表示合法的，否则返回‘1’,因为将数据库不在存储明文了，所以也不怕数据不合法了，都是随机的MD5值
-char isLegal(char *name)
-{
-    int flag = '1';
-    while(*name != '\0') {
-        if((*name >= '0' && *name <= '9') || (*name >= 'a' && *name <= 'z') || (*name >= 'A' && *name <= 'Z')) {
-            flag = '0';
-        }
-        else flag = '1';
-        ++name;
-    }
-    return flag;
-}
+//char isLegal(char *name)
+//{
+//    int flag = '1';
+//    while(*name != '\0') {
+//        if((*name >= '0' && *name <= '9') || (*name >= 'a' && *name <= 'z') || (*name >= 'A' && *name <= 'Z')) {
+//            flag = '0';
+//        }
+//        else flag = '1';
+//        ++name;
+//    }
+//    return flag;
+//}

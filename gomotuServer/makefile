@@ -24,7 +24,7 @@ list.o : list.h list.c
 
 clean :
 	-rm *.o
-	-rm mainServ
+	#-rm mainServ
 	-rm pri_str_key
 	-rm pub_str_key
 	-rm gomotu.log

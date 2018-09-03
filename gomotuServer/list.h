@@ -1,5 +1,5 @@
 /*
- *	用来存储，已连接的描述符，未连接的描述符，棋子的步骤
+ *	链表数据结构的声明
  */
 #ifndef _LIST_H_
 #define _LIST_H_
@@ -11,8 +11,8 @@ struct node {
 };
 
 struct node * createList();						//创建新的链表
-void insertNode(struct node *, void *);			//删除节点,返回存储的数据的指针
-void* deleteNode(struct node *, void *);		//void* 表示的是在堆区申请的空间或静态区，在栈区会造成野指针
+int insertNode(struct node *, void *);			//插入节点，返回0成功，-1失败
+void* deleteNode(struct node *, void *);		//返回被删除节点的数据
 int  getLength(struct node *);
 struct node* findNode(struct node *, void *);	//查找链表，返回前一个节点的指针
 

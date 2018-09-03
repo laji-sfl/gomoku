@@ -1,5 +1,6 @@
 /*
  *	链表的实现
+ *		1、没有对malloc的返回值进行判断
  */
 
 #include "list.h"		//链表的函数与结构的声明
@@ -15,8 +16,11 @@ struct node* createList()
 }
 
 //插入节点
-void insertNode(struct node *head, void *beInsert)
+int insertNode(struct node *head, void *beInsert)
 {
+	if(head == NULL || beInsert == NULL) 
+		return -1;
+
 	while(head->pnext != NULL) {	//找到最后一个节点
 		head = head->pnext;
 	}
@@ -26,11 +30,16 @@ void insertNode(struct node *head, void *beInsert)
 	newNode->pdata = beInsert;
 	newNode->pnext = NULL;
 	head->pnext = newNode;
+
+	return 0;
 }
 
 //删除节点,返回存储的数据的指针
 void* deleteNode(struct node *head, void *beDelete)
 {
+	if(head == NULL || beDelete == NULL) 
+		return NULL;
+
 	struct node *current = findNode(head, beDelete);	//找到要删除结点的前一个
 	struct node *tmp = current->pnext;	//保存要删除的结点
 	void *ret = tmp->pdata;				//保存数据的指针
@@ -42,6 +51,9 @@ void* deleteNode(struct node *head, void *beDelete)
 //得到链表的长度
 int getLength(struct node *head)
 {
+	if(head == NULL)
+		return -1;
+
 	int len = 0;
 	while(head->pnext != NULL) {
 		len++;
@@ -50,9 +62,12 @@ int getLength(struct node *head)
 	return len;
 }
 
-//查找节点，返回前一个节点的指针,void* 表示的是在堆区或者静态区申请的内存的指针
+//查找节点，返回前一个节点的指针
 struct node* findNode(struct node *head, void *beFind)
 {
+	if(head == NULL || beFind == NULL)
+		return NULL;
+
 	while(head->pnext != NULL) {
 		if(head->pnext->pdata == beFind)
 			return head;

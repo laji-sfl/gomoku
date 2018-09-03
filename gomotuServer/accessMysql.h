@@ -8,6 +8,7 @@
 
 /*
  * 	数据库名gomotu，数据表名playerNamePwd，数据列player_name,player_pwd,player_img_dir
+ * 	数据库中name和pwd都是编码后的数据，不是明文
  */
 
 //连接MySQL数据库，验证用户是否已经注册
@@ -27,6 +28,6 @@ char updateUserMsg(char *name, char *pwd, char *img_dir);
 
 
 //检测字符串的合法性
-char isLegal(char *name);
+//char isLegal(char *name);
 
 #endif

@@ -1,7 +1,8 @@
-#include "encryption.h"
 /*
  * 加密接口的实现
+ * 	   malloc等库函数没有进行返回值判断
  */
+#include "encryption.h"
 
 void readRSAKey(char *str, char **key)
 {
@@ -125,9 +126,7 @@ int aesDecrypt(char *ciphetext, char *plaintext, char *key, int ciphelen)
     AES_KEY aes;
     AES_set_decrypt_key((unsigned char *)key, 128, &aes);
 
-//  int ciphetextLen = strlen(ciphetext);
     int ciphetextLen = ciphelen;
-//	printf("miwen len aes = %d\n", ciphetextLen);
     int decryptLen = 0; //已经加密的长度
 
     while(decryptLen < ciphetextLen)

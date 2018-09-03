@@ -37,7 +37,7 @@
 
 #define UNDOMOVE	'5'	//悔棋
 	/*
-	 *server返回的数据格式：TODO:
+	 *server返回的数据格式：服务器只进行简单的转发数据报
 	 *server接收的数据格式：
 	*/
 

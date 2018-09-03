@@ -36,11 +36,11 @@ int CreateSocket(int port, char *ip);
 void setFdNoBlock(int fd);
 
 
-//添加epoll的EL事件和epolloneshot事件
+//添加epoll的EL事件和epolloneshot事件	//实现没有使用epolloneshot，没有实现大文件传输
 void epollAddFd(int epollFd, int netfd);
 
 
-//日志文件操作
+//日志文件操作			//这个版本日志非常简单只是打开文件写入文件，还不支持变长参数
 void set_log(char *str);
 
 //创建一个新的线程，并且将新连接上的fd加入epoll监听队列
@@ -51,6 +51,6 @@ void *threadFunAccept(void *arg);
 void sendPubKeyToClient(int fd);
 
 //修改描述符的epoll监听事件
-//void epollModFd(int fd);
+//void epollModFd(int fd)
 
 #endif
