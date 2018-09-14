@@ -41,13 +41,13 @@ void readFd(int fd, char **msg, int epollfd)
 		len = read(fd, buf, BUFSIZE);
 		if(len == -1) {
 		 	if(errno == EAGAIN) {	//读取完毕
-//				printf("read over fd:%d.\n", fd);
-				//set_log("read fd over");	//还需要将函数设置成为可接受可变参数的
+//				set_log("read fd over:%d,%s:%s:%d", fd, __FILE__,__FUNCTION__,__LINE__);//还需要将函数设置成为可接受可变参数的
+//				printf("read over fd:%d\n", fd);
 				break;
 			}
 			else {	//有错误说明连接出现了问题，就直接断开连接，取出epoll的监听
-//				printf("read error:%d!\n", fd);
-				set_log("read error!;");
+//				set_log("read error fd:%d, %s:%s:%d",fd,__FILE__,__FUNCTION__,__LINE__);
+				printf("error fd:%d\n", fd);
 				
 				//清理匹配信息
 				cleanFd(fd, epollfd);
@@ -55,9 +55,8 @@ void readFd(int fd, char **msg, int epollfd)
 			}
 		}
 		else if(len == 0) {	//遇到文件结尾
-//			printf("len == 0; close fd: %d\n", fd);
-//			set_log("close fd;");
-			
+//			set_log("close fd:%d, %s:%s:%d", fd, __FILE__,__FUNCTION__,__LINE__);
+//			printf("close fd:%d\n", fd);
 			cleanFd(fd, epollfd);
 			break;
 		}
@@ -70,14 +69,17 @@ void readFd(int fd, char **msg, int epollfd)
 	}
 
     //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密,第一个字节不加密，CD不加密
-	if (tmp[0] != 'C' && tmp[0] != 'D' && tmp[0] != '\0') {
-		len = base64_decode(tmp+1, strlen(tmp)-1, beDecode);	//对密文解码
-		aesDecrypt(beDecode, buf+1, myaes_Key, len);			//对密文解密
-		buf[0] = tmp[0];								//将解密后的字符串拼接
-	}
-	else memcpy(*msg, tmp, BUFSIZE);
+//	if (tmp[0] != 'C' && tmp[0] != 'D' && tmp[0] != '\0') {
+//		len = base64_decode(tmp+1, strlen(tmp)-1, beDecode);	//对密文解码
+//		aesDecrypt(beDecode, buf+1, myaes_Key, len);			//对密文解密
+//		buf[0] = tmp[0];								//将解密后的字符串拼接
+//	}
+//	else memcpy(*msg, tmp, BUFSIZE);
+	
+	//TODO:test
+	memcpy(*msg, tmp, BUFSIZE);
 
-//	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
+	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
 }
 
 //分析数据报并且调用相应的函数
@@ -117,7 +119,9 @@ void analyzeMsg(char *msg, int fd)
 		break;
 	default:
 //		printf("format illegal, please see dataType.h\n");
-		set_log("format illegal");
+//		set_log("format illegal fd:%d, %s:%s:%d", fd, __FILE__,__FUNCTION__,__LINE__);
+//		printf("format illegal fd:%d\n", fd);
+		write(fd, "hello", 5);
 		break;
 	}
 

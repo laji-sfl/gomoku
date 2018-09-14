@@ -10,12 +10,12 @@ void setFdNoBlock(int fd)
 
     //获取文件描述符标志
     if((flag = fcntl(fd, F_GETFL, 0)) == -1)
-        set_log("error:fcntl get flag");
+        set_log("error:fcntl,%s:%s:%d", __FILE__,__FUNCTION__,__LINE__);
 
     //设置文件描述符标志
     flag |= O_NONBLOCK;
     if(fcntl(fd, F_SETFL, flag) == -1)
-		set_log("error:fcntl set flag");
+		set_log("error:fcntl,%s:%s:%d", __FILE__,__FUNCTION__,__LINE__);
 }
 
 int CreateSocket(int port, char *ip)
@@ -33,7 +33,7 @@ int CreateSocket(int port, char *ip)
     serv_addr.sin_addr.s_addr = inet_addr(ip);
     serv_addr.sin_port = htons(port);
     bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
-    listen(sockfd, 10);     //连接等待队列的长度设置为10，是随便设置的
+    listen(sockfd, 128);
 
     return sockfd;
 }
@@ -49,16 +49,74 @@ void epollAddFd(int epollFd, int netfd)
     event.events = EPOLLIN | EPOLLET;   //读事件，边沿触发，暂时不弄epolloneshot
     if(0 != epoll_ctl(epollFd, EPOLL_CTL_ADD, netfd, &event)) {
         printf("添加epoll监听事件失败，fd=%d;\n", netfd);
+		set_log("add epoll fd defeat,%s:%s:%d",__FILE__,__FUNCTION__,__LINE__);
     }
 }
 
-//设置日志文件操作
-void set_log(char *str)
+int itoa(int num, char *str, int power)
+{
+	if(power != 10)
+		return -1;
+	int ret = 0;
+	while(num)
+	{
+		*str = (num % 10) + '0';
+		num /= 10;
+		str++;
+		ret++;
+	}
+	return ret;
+}
+
+#define CHECK_BUFLEN(m, n) m += n;if(m > 2048) break;
+
+//设置日志文件操作,日志的每一句都不能超过1024
+void set_log(char *str, ...)
 {
 	time_t rawtime;
     struct tm *tim;
-	int fd = 0;
+	int fd = 0, inputlen = 0;
     char buf[2048 + 50] = {0};
+	char strbuf[2048] = {0}, *pw = strbuf, numbuf[25] = {0}, *s = NULL;
+
+	va_list multiArg = NULL;
+	va_start(multiArg, str);	//第二个参数是可变参数前面的哪一个参数
+
+	inputlen = strlen(str);	//计算字符串长度防止缓冲区溢出
+
+	//根据占位符判断类型，组合字符串
+	while(*str != '\0' && inputlen < 2048) {
+		if(*str == '%'){
+			switch(*(str+1))
+			{
+			case 'c':
+				CHECK_BUFLEN(inputlen,1);
+				*pw = (char)va_arg(multiArg, int);
+				pw++; str++;;
+				break;
+			case 'd':
+				CHECK_BUFLEN(inputlen, itoa(va_arg(multiArg, int), numbuf, 10));
+				strcat(pw, numbuf);
+				pw += strlen(pw);
+				str++;
+				break;
+			case 's':
+				s = va_arg(multiArg, char *);
+				CHECK_BUFLEN(inputlen, strlen(s));
+				strcat(pw, s);
+				pw += strlen(pw);
+				str++;
+				break;
+			default:
+				break;
+			}
+		}else{
+			*pw = *str;
+			pw++;
+		}
+		str++;
+	}
+	va_end(multiArg);
 
 	//打开日志文件
 	fd = open("gomotu.log", O_RDWR | O_CREAT | O_APPEND, 0664);
@@ -68,7 +126,7 @@ void set_log(char *str)
     tim = localtime(&rawtime);
 
     sprintf(buf, "Time:%d月%d日-%d:%d:%d,log:%s\n", tim->tm_mon+1,
-            tim->tm_mday, tim->tm_hour, tim->tm_min, tim->tm_sec, str);
+            tim->tm_mday, tim->tm_hour, tim->tm_min, tim->tm_sec, strbuf);
 
     write(fd, buf, strlen(buf));
     close(fd);
@@ -94,7 +152,7 @@ void *threadFunAccept(void *arg)
 //				printf("accept EAGAIN\n");
 				break;
 			} else {
-				set_log("newThreadAddToEpoll accept error");
+				set_log("accept error,%s:%s:%d",__FILE__,__FUNCTION__,__LINE__);
 				break;
 			}
 		}
@@ -124,8 +182,19 @@ void sendPubKeyToClient(int fd)
 
 //    strcat(buf, key);
 
-    //发送给客户端
-    write(fd, "C", 1);
+    //发送给客户端TODO:test
+//    write(fd, "C", 1);
 
     //free(key);
 }
+
+void set_signalHandler(int signo, void (*f)(int))
+{
+	//不使用信号屏蔽字
+	struct sigaction act;
+	act.sa_handler = f;
+	act.sa_flags = 0;
+	if(0 > sigaction(signo, &act, NULL))
+		set_log("sigaction error,%s:%s:%d",__FILE__,__FUNCTION__,__LINE__);
+}
+

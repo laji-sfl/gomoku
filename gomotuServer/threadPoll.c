@@ -29,7 +29,6 @@ char initThreadPoll(int threadNum, struct ThPoll **thPoll)
     for(i = 0;i < threadNum; ++i) {
         pthread_create(&tid, &tattr, threadFun, *thPoll);
     }
-	printf("\n");
 
     //销毁不用的资源
     pthread_attr_destroy(&tattr);
