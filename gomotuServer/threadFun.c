@@ -32,7 +32,7 @@ void readFd(int fd, char **msg, int epollfd)
 	char beDecode[BUFSIZE] = {0};
 
 	//传出msg的内存区域指针
-	char *buf = (char *)malloc(BUFSIZE);	//直接分配1024个字节，不去节省内存了（这个之后再说）
+    char *buf = (char *)malloc(BUFSIZE);	//直接分配BUFSIZE个字节，不去节省内存了（这个之后专门设计缓冲区模块或者设计内存分配器）
 	memset(buf, 0, BUFSIZE);
 	*msg = buf;
 
@@ -47,7 +47,7 @@ void readFd(int fd, char **msg, int epollfd)
 			}
 			else {	//有错误说明连接出现了问题，就直接断开连接，取出epoll的监听
 //				set_log("read error fd:%d, %s:%s:%d",fd,__FILE__,__FUNCTION__,__LINE__);
-				printf("error fd:%d\n", fd);
+                printf("read error fd:%d\n", fd);
 				
 				//清理匹配信息
 				cleanFd(fd, epollfd);
@@ -60,7 +60,7 @@ void readFd(int fd, char **msg, int epollfd)
 			cleanFd(fd, epollfd);
 			break;
 		}
-		else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完1024字节应该没有问题
+        else {	//肯定会执行到这里，不过一次调用执行两次的情况应该不会发生，read一次读完BUFSIZE字节应该没有问题
 //			printf("len>0时: fd=%d,len=%d\nmsg=%s\n", fd, len, buf);
 			strcat(tmp, buf);
 //			memcpy(tmp, buf, BUFSIZE);	
@@ -68,7 +68,7 @@ void readFd(int fd, char **msg, int epollfd)
 		}
 	}
 
-    //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密,第一个字节不加密，CD不加密
+    //解密,每次读的内容都解密，要求客户端每次都加密，服务器发出的内容都不加密,第一个字节不加密，C、D不加密
 //	if (tmp[0] != 'C' && tmp[0] != 'D' && tmp[0] != '\0') {
 //		len = base64_decode(tmp+1, strlen(tmp)-1, beDecode);	//对密文解码
 //		aesDecrypt(beDecode, buf+1, myaes_Key, len);			//对密文解密
@@ -79,7 +79,7 @@ void readFd(int fd, char **msg, int epollfd)
 	//TODO:test
 	memcpy(*msg, tmp, BUFSIZE);
 
-	printf("readFd函数结束; fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
+    //printf("fd=%d, len=%d, msg=%s\n", fd, strlen(*msg), *msg);	//看看最终的信息有没有读错
 }
 
 //分析数据报并且调用相应的函数
@@ -121,6 +121,8 @@ void analyzeMsg(char *msg, int fd)
 //		printf("format illegal, please see dataType.h\n");
 //		set_log("format illegal fd:%d, %s:%s:%d", fd, __FILE__,__FUNCTION__,__LINE__);
 //		printf("format illegal fd:%d\n", fd);
+
+        //TODO:test
 		write(fd, "hello", 5);
 		break;
 	}

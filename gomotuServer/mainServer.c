@@ -1,7 +1,7 @@
 #include "mainAidFun.h"
 #include "threadPoll.h"
 
-#define EVENTNUM    10000  //epoll_wait返回的事件数组的元素个数，也是最大的个数
+#define EVENTNUM    10003  //epoll_wait返回的事件数组的元素个数，也是最大的个数
 
 //全局变量链表
 extern struct node *alreadyMt;	//已经匹配的链表
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     }
 
     //初始化RSA秘钥对
-//    createRSAkey();
+    //createRSAkey();
 
 	//注册信号函数
 	set_signalHandler(SIGINT, sigintHandler);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
 	//创建并初始化线程池
 	struct ThPoll *thpoll = NULL;
-	if ( '1' == initThreadPoll(10, &thpoll)) {	//暂时默认5个线程
+    if ( '1' == initThreadPoll(10, &thpoll)) {	//暂时默认10个线程
 		set_log("init threadpoll error,%s:%s:%d",__FILE__,__FUNCTION__,__LINE__);
 	}
 

@@ -71,6 +71,7 @@ int itoa(int num, char *str, int power)
 #define CHECK_BUFLEN(m, n) m += n;if(m > 2048) break;
 
 //设置日志文件操作,日志的每一句都不能超过1024
+//之后的日志优化肯定不会每次都打开和关闭文件
 void set_log(char *str, ...)
 {
 	time_t rawtime;
@@ -148,6 +149,14 @@ void *threadFunAccept(void *arg)
 	
 	while(1) {
 		if((confd = accept(sockfd->fd, (struct sockaddr *)&clieaddr, &clielen)) == -1) {
+            //TODO:test
+            if(errno == EMFILE)
+                printf("already reached per-process fd of open num\n");
+            if(errno == ENFILE)
+                printf("reached system-wide fd num\n");
+            if(errno == ENOBUFS || errno == ENOMEM)
+                printf("no memery\n");
+
 			if(errno == EAGAIN || errno == EWOULDBLOCK) {
 //				printf("accept EAGAIN\n");
 				break;
@@ -167,25 +176,14 @@ void *threadFunAccept(void *arg)
 	pthread_exit(NULL);
 }
 
-//void epollModFd(int fd)
-//{}
-
 void sendPubKeyToClient(int fd)
 {
-//    char *key = NULL;
-//    char buf[2048] = {0};
-//    buf[0] = 'C';       //C表示接收到的是公钥
-
     //TODO:从磁盘读取秘钥，写在这里会造成每一个连接都会读取秘钥，也可以写在初始化过程将秘钥存储在内存中减少读取的开销。
 //    readRSAKey("./pub_str_key", &key);  //TODO:路径不应该直接写出来的应该改为参数
     //TODO:在readPubKey中将二级指针改为栈区的buf，在内部直接调用strcat会效率更高并且省去了分配管理内存的麻烦。
 
-//    strcat(buf, key);
-
     //发送给客户端TODO:test
 //    write(fd, "C", 1);
-
-    //free(key);
 }
 
 void set_signalHandler(int signo, void (*f)(int))

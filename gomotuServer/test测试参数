@@ -1,4 +1,40 @@
 webbench test
+1.本机测试，1000并发量的连接，线程池中10个线程，连接上之后，接收客户端内容输出，然后回复hello
+    error fd=47,error fd=393,共1000个fd，出错两个,出错原因为关闭了两次，也就是说明存在多个线程访问同一个fd的情况。
+    原因：
+2.本机测试，1024并发连接
+    already reached per-process fd of open num
+    原因：达到进程可以打开的最大文件描述符个数
+3.本机测试：修改打开文件描述符的限制之后，2000并发
+    我的电脑： /proc/sys/fs/file-max 191214， ulimit -Sn 1024，ulimit -Hn 1048576
+	出现段错误
+	原因：
 
 
 valgrind test
+1.本机测试，运行之后，是否会出现内存泄露问题
+  如果没有传入参数，进程退出，still reachable: 18,944 bytes in 1 blocks，没有错误
+  启动进程但是没有连接：
+    Syscall param epoll_ctl(event) points to uninitialised byte(s)
+    Syscall param rt_sigaction(act->sa_mask) points to uninitialised byte(s)
+    possibly lost: 1,440 bytes in 10 blocks
+    still reachable: 139,088 bytes in 6 blocks
+    原因：由于未初始化出现在库函数内部，所以没关系
+  连接多个个客户端之后：
+    Syscall param epoll_ctl(event) points to uninitialised byte(s)
+    possibly lost: 1,440 bytes in 10 blocks
+    pthread_create 1,440 bytes in 10 blocks are possibly lost in loss record 5 of 7
+    原因：pthread_create内部可能存在内存的泄露，所以没关系
+2.经过简单的测试，在服务器程序中，没有测试出内存泄露，进行过单个连接和多个连接依然显示
+    可能存在1440字节的泄露，而且存在于initThreadPoll->pthread_create->x->x->x->calloc
+    中，上面式子表示调用顺序，由于不了解内核源码，所以无法对这种情况进行深入，等待下个版本吧！！
+3.线程竞争测试 helgrind
+    在测试过程中createRSA会非常非常浪费时间，所以将他注释了，原因可能因为计算复杂吧（不了解openssl的源码）。
+    出现pthread_cond_{signal,broadcast}:dubious: associated lock is not held by any thread，
+    原因：在官网上发现Although these are unglamourous errors,实际上helgrind不能很好的检测条件量的错误，所以提示的错误可以忽略
+4.进行完整的功能情况下，内存和线程的测试
+    。。。未完待续。。。
+
+
+
+
